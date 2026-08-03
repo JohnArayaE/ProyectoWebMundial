@@ -140,6 +140,36 @@
                 Obtendrás puntos con tus predicciones.
               </p>
             </article>
+
+            <article class="summary-card favorites-card">
+              <div class="summary-icon">
+                ⚽
+              </div>
+
+              <span class="summary-label">
+                Partidos favoritos
+              </span>
+
+              <strong class="favorites-count">
+                {{ favoriteMatchesCount }}
+              </strong>
+
+              <p>
+                {{
+                  favoriteMatchesCount === 1
+                    ? "Tienes un partido guardado."
+                    : `Tienes ${favoriteMatchesCount} partidos guardados.`
+                }}
+              </p>
+
+              <NuxtLink
+                to="/profile/favorites"
+                class="favorites-link"
+              >
+                Ver mis favoritos
+                <span>→</span>
+              </NuxtLink>
+            </article>
           </section>
         </template>
 
@@ -182,6 +212,10 @@ const userInitial = computed(() => {
   return name
     ? name.charAt(0).toUpperCase()
     : "U"
+})
+
+const favoriteMatchesCount = computed<number>(() => {
+  return currentUser.value?.favoriteMatches.length ?? 0
 })
 
 useHead({
@@ -345,7 +379,7 @@ watch(
 }
 
 .main-profile-card {
-  grid-row: span 2;
+  grid-row: span 3;
   padding: 32px;
 }
 
@@ -464,7 +498,8 @@ watch(
   font-size: 23px;
 }
 
-.summary-card strong.points {
+.summary-card strong.points,
+.summary-card strong.favorites-count {
   font-size: 34px;
   color: var(--lime-dark);
 }
@@ -474,6 +509,63 @@ watch(
   font-size: 12px;
   line-height: 1.55;
   color: var(--gray);
+}
+
+.favorites-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.favorites-card::after {
+  position: absolute;
+  right: -25px;
+  bottom: -35px;
+  width: 110px;
+  height: 110px;
+  content: "";
+  border: 24px solid rgba(157, 202, 83, 0.09);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.favorites-link {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 43px;
+  padding: 10px 14px;
+  margin-top: 20px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--white);
+  text-decoration: none;
+  border: 1px solid var(--black);
+  border-radius: 11px;
+  background: var(--black);
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.favorites-link span {
+  font-size: 17px;
+  transition: transform 180ms ease;
+}
+
+.favorites-link:hover {
+  color: var(--black);
+  border-color: var(--lime);
+  background: var(--lime);
+  transform: translateY(-2px);
+}
+
+.favorites-link:hover span {
+  transform: translateX(3px);
 }
 
 .state-card {

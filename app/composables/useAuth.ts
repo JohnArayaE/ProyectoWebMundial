@@ -28,6 +28,7 @@ type AuthUser = {
   name: string
   email: string
   favoriteTeam: string
+  favoriteMatches: string[]
   points: number
   createdAt?: unknown
   updatedAt?: unknown
@@ -66,6 +67,14 @@ const mapFirestoreUser = (
       typeof data.favoriteTeam === "string"
         ? data.favoriteTeam
         : "",
+
+    favoriteMatches:
+      Array.isArray(data.favoriteMatches)
+        ? data.favoriteMatches.filter(
+            (matchId): matchId is string =>
+              typeof matchId === "string"
+          )
+        : [],
 
     points:
       typeof data.points === "number"
@@ -120,6 +129,7 @@ export const useAuth = () => {
         name: user.displayName ?? "",
         email: user.email ?? "",
         favoriteTeam: "",
+        favoriteMatches: [],
         points: 0,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
