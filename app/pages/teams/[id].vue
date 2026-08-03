@@ -1,232 +1,828 @@
 <template>
   <div class="team-detail-page">
-    <div v-if="loading" class="loader-container">
-      <div class="spinner"></div>
-      <p>Cargando información del equipo...</p>
-    </div>
+    <main class="page-container">
+      <NuxtLink to="/teams" class="back-link">
+        ← Volver a selecciones
+      </NuxtLink>
 
-    <div v-else-if="error" class="error-container glass">
-      <p>⚠️ {{ error }}</p>
-      <NuxtLink to="/teams" class="btn btn-secondary mt-4">Volver</NuxtLink>
-    </div>
-
-    <div v-else-if="team" class="team-content animate-fade-in">
-      <div class="hero glass">
-        <div class="hero-content">
-          <div class="flag-large">
-            <span v-if="team.flag && team.flag.trim() !== ''">{{ team.flag }}</span>
-            <span v-else>🏳️</span>
-          </div>
-          <div class="hero-info">
-            <div class="badges">
-              <span class="badge">Grupo {{ team.group }}</span>
-              <span class="badge">{{ team.confederation }}</span>
-              <span v-if="team.fifaRanking" class="badge rank">FIFA #{{ team.fifaRanking }}</span>
-            </div>
-            <h1 class="team-name-large text-gradient">{{ team.name }}</h1>
-            <p v-if="team.coach" class="coach-name">DT: {{ team.coach }}</p>
-          </div>
-        </div>
+      <div v-if="pageLoading" class="loader-container">
+        <div class="spinner"></div>
+        <p>Cargando información de la selección...</p>
       </div>
 
-      <div class="roster-section">
-        <h2 class="section-title">Plantilla de Jugadores</h2>
-        
-        <div v-if="team.roster && team.roster.length > 0" class="roster-grid">
-          <div v-for="(player, index) in team.roster" :key="index" class="player-card glass glass-card">
-            <div class="player-number">{{ player.number || '-' }}</div>
-            <div class="player-info">
-              <h3 class="player-name">{{ player.name }}</h3>
-              <p class="player-position">{{ player.position || 'Jugador' }}</p>
-            </div>
-          </div>
-        </div>
-        
-        <div v-else class="empty-roster glass">
-          <p>Aún no hay jugadores registrados para esta selección.</p>
-        </div>
+      <div v-else-if="pageError" class="state-card error-state">
+        <div class="state-icon">⚠️</div>
+
+        <h1>No se pudo cargar la selección</h1>
+
+        <p>{{ pageError }}</p>
+
+        <button
+          type="button"
+          class="btn btn-primary"
+          @click="loadTeam"
+        >
+          Intentar nuevamente
+        </button>
       </div>
-      
-      <div class="back-action">
-        <NuxtLink to="/teams" class="btn btn-secondary">
-          <span>&larr;</span> Volver a Equipos
+
+      <div v-else-if="!team" class="state-card empty-state">
+        <div class="state-icon">🔍</div>
+
+        <h1>Selección no encontrada</h1>
+
+        <p>
+          La selección solicitada no existe o fue eliminada.
+        </p>
+
+        <NuxtLink to="/teams" class="btn btn-primary">
+          Ver todas las selecciones
         </NuxtLink>
       </div>
-    </div>
+
+      <article v-else class="team-detail">
+        <section class="team-hero">
+          <div class="flag-container">
+            <span
+              v-if="team.flag && team.flag.trim() !== ''"
+              class="team-flag"
+            >
+              {{ team.flag }}
+            </span>
+
+            <span v-else class="team-flag">
+              🏳️
+            </span>
+          </div>
+
+          <div class="hero-information">
+            <div class="hero-badges">
+              <span class="hero-badge">
+                Grupo {{ team.group || 'sin asignar' }}
+              </span>
+
+              <span
+                v-if="team.fifaRanking"
+                class="hero-badge ranking-badge"
+              >
+                FIFA #{{ team.fifaRanking }}
+              </span>
+            </div>
+
+            <h1 class="team-name">
+              {{ team.name }}
+            </h1>
+          </div>
+        </section>
+
+        <section class="information-section">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">SELECCIÓN</span>
+              <h2>Información general</h2>
+            </div>
+          </div>
+
+          <div class="information-grid">
+            <div class="information-card">
+              <span class="information-icon">🌎</span>
+
+              <div>
+                <span class="information-label">
+                  Confederación
+                </span>
+
+                <strong class="information-value">
+                  {{ team.confederation || 'No registrada' }}
+                </strong>
+              </div>
+            </div>
+
+            <div class="information-card">
+              <span class="information-icon">🏆</span>
+
+              <div>
+                <span class="information-label">
+                  Grupo
+                </span>
+
+                <strong class="information-value">
+                  {{ team.group || 'Sin asignar' }}
+                </strong>
+              </div>
+            </div>
+
+            <div class="information-card">
+              <span class="information-icon">📊</span>
+
+              <div>
+                <span class="information-label">
+                  Ranking FIFA
+                </span>
+
+                <strong class="information-value">
+                  {{
+                    team.fifaRanking
+                      ? `Puesto ${team.fifaRanking}`
+                      : 'No registrado'
+                  }}
+                </strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="players-section">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">PLANTILLA</span>
+
+              <h2>
+                Jugadores de {{ team.name }}
+              </h2>
+            </div>
+
+            <span class="players-count">
+              {{ teamPlayers.length }}
+              {{ teamPlayers.length === 1 ? 'jugador' : 'jugadores' }}
+            </span>
+          </div>
+
+          <div v-if="playersLoading" class="small-loader">
+            <div class="spinner spinner-small"></div>
+            <p>Cargando jugadores...</p>
+          </div>
+
+          <div
+            v-else-if="playersError"
+            class="players-message players-message--error"
+          >
+            ⚠️ {{ playersError }}
+          </div>
+
+          <div
+            v-else-if="teamPlayers.length > 0"
+            class="players-grid"
+          >
+            <NuxtLink
+              v-for="player in teamPlayers"
+              :key="player.id"
+              :to="`/players/${player.id}`"
+              class="player-card"
+            >
+              <div class="player-number">
+                {{ player.number ?? '-' }}
+              </div>
+
+              <div class="player-information">
+                <h3>{{ player.name }}</h3>
+
+                <div class="player-badges">
+                  <span class="player-badge player-badge--position">
+                    {{ player.position || 'Sin posición' }}
+                  </span>
+
+                  <span class="player-badge">
+                    {{ player.club || 'Sin club' }}
+                  </span>
+                </div>
+              </div>
+
+              <span class="player-arrow">
+                →
+              </span>
+            </NuxtLink>
+          </div>
+
+          <div v-else class="players-message">
+            <div class="empty-player-icon">⚽</div>
+
+            <h3>No hay jugadores registrados</h3>
+
+            <p>
+              Todavía no se han registrado jugadores para esta selección.
+            </p>
+
+            <NuxtLink
+              to="/players/manage"
+              class="btn btn-primary"
+            >
+              Registrar jugador
+            </NuxtLink>
+          </div>
+        </section>
+
+        <footer class="page-actions">
+          <NuxtLink to="/teams" class="btn btn-secondary">
+            Ver todas las selecciones
+          </NuxtLink>
+
+          <NuxtLink
+            to="/teams/manage"
+            class="btn btn-primary"
+          >
+            Gestionar equipos
+          </NuxtLink>
+        </footer>
+      </article>
+    </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import {
+  computed,
+  onMounted,
+  ref,
+  watch
+} from 'vue'
 
 const route = useRoute()
-const { getTeamById, loading, error } = useTeams()
+
+const {
+  loading: teamLoading,
+  error: teamError,
+  fetchTeamById
+} = useTeams()
+
+const {
+  players,
+  loading: playersLoading,
+  error: playersError,
+  fetchPlayers
+} = usePlayers()
 
 const team = ref(null)
+const localError = ref(null)
+const initialLoading = ref(true)
 
-onMounted(async () => {
-  const teamId = route.params.id
-  if (teamId) {
-    team.value = await getTeamById(teamId)
+const teamId = computed(() => {
+  const id = route.params.id
+
+  return Array.isArray(id) ? id[0] : id
+})
+
+const pageLoading = computed(() => {
+  return initialLoading.value || teamLoading.value
+})
+
+const pageError = computed(() => {
+  return localError.value || teamError.value
+})
+
+const teamPlayers = computed(() => {
+  if (!team.value) {
+    return []
+  }
+
+  return players.value
+    .filter(player => player.teamId === team.value.id)
+    .slice()
+    .sort((firstPlayer, secondPlayer) => {
+      const firstNumber = Number(firstPlayer.number) || 999
+      const secondNumber = Number(secondPlayer.number) || 999
+
+      return firstNumber - secondNumber
+    })
+})
+
+async function loadTeam() {
+  initialLoading.value = true
+  localError.value = null
+  team.value = null
+
+  if (!teamId.value) {
+    localError.value =
+      'El identificador de la selección no es válido.'
+
+    initialLoading.value = false
+    return
+  }
+
+  const results = await Promise.allSettled([
+    fetchTeamById(teamId.value),
+    fetchPlayers()
+  ])
+
+  const teamResult = results[0]
+  const playersResult = results[1]
+
+  if (teamResult.status === 'fulfilled') {
+    team.value = teamResult.value
+  } else {
+    console.error(
+      '[teams/id] Error cargando equipo:',
+      teamResult.reason
+    )
+
+    localError.value =
+      'Ocurrió un error al consultar la selección.'
+  }
+
+  if (playersResult.status === 'rejected') {
+    console.error(
+      '[teams/id] Error cargando jugadores:',
+      playersResult.reason
+    )
+  }
+
+  initialLoading.value = false
+}
+
+onMounted(() => {
+  loadTeam()
+})
+
+watch(teamId, (newId, previousId) => {
+  if (newId && newId !== previousId) {
+    loadTeam()
   }
 })
 </script>
 
 <style scoped>
 .team-detail-page {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
+  --black: #0b0d0c;
+  --lime: #9dca53;
+  --lime-dark: #729c34;
+  --lime-soft: #edf6df;
+  --white: #ffffff;
+  --background: #eef1ec;
+  --border: #dce1d9;
+  --gray: #747c74;
+  --text: #171a17;
+  --danger: #b93838;
+
+  min-height: 100vh;
+  padding: 64px 24px;
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(
+      circle at 10% 5%,
+      rgba(157, 202, 83, 0.14),
+      transparent 27%
+    ),
+    var(--background);
 }
 
-.hero {
-  padding: 48px;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
-  border-bottom: 2px solid var(--accent);
+.page-container {
+  width: min(1000px, 100%);
+  margin: 0 auto;
 }
 
-.hero-content {
-  display: flex;
+.back-link {
+  display: inline-flex;
+  margin-bottom: 25px;
   align-items: center;
-  gap: 40px;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  text-decoration: none;
 }
 
-@media (max-width: 768px) {
-  .hero-content {
-    flex-direction: column;
-    text-align: center;
-  }
+.back-link:hover {
+  color: var(--lime-dark);
 }
 
-.flag-large {
-  font-size: 6rem;
-  width: 160px;
-  height: 160px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 50%;
+.team-detail,
+.state-card {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: var(--white);
+  box-shadow: 0 14px 40px rgba(20, 25, 20, 0.08);
+}
+
+.team-hero {
   display: flex;
+  min-height: 330px;
+  padding: 55px;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  border: 4px solid rgba(255, 255, 255, 0.1);
+  gap: 44px;
+  color: var(--white);
+  background:
+    radial-gradient(
+      circle at 86% 15%,
+      rgba(157, 202, 83, 0.25),
+      transparent 31%
+    ),
+    linear-gradient(135deg, #0b0d0c, #252b23);
 }
 
-.badges {
+.flag-container {
+  display: grid;
+  width: 170px;
+  height: 170px;
+  flex-shrink: 0;
+  place-items: center;
+  border: 5px solid rgba(255, 255, 255, 0.18);
+  border-radius: 42px;
+  background: var(--white);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.28);
+}
+
+.team-flag {
+  font-size: 78px;
+  line-height: 1;
+}
+
+.hero-information {
+  min-width: 0;
+}
+
+.hero-badges {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
-@media (max-width: 768px) {
-  .badges {
-    justify-content: center;
-  }
+.hero-badge {
+  padding: 7px 13px;
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--black);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 999px;
+  background: var(--lime);
 }
 
-.badge {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+.ranking-badge {
+  color: var(--white);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.12);
 }
 
-.badge.rank {
-  background: rgba(34, 197, 94, 0.2);
-  color: var(--success);
-  border: 1px solid rgba(34, 197, 94, 0.3);
+.team-name {
+  margin: 0;
+  font-size: clamp(42px, 7vw, 70px);
+  line-height: 0.98;
+  letter-spacing: -3px;
 }
 
-.team-name-large {
-  font-size: 4rem;
-  line-height: 1.1;
-  margin-bottom: 16px;
+.information-section,
+.players-section {
+  padding: 42px;
 }
 
-.coach-name {
-  font-size: 1.2rem;
-  color: var(--text-secondary);
+.players-section {
+  border-top: 1px solid var(--border);
+  background: #f8f9f7;
 }
 
-.section-title {
-  font-size: 2rem;
-  margin-bottom: 24px;
-}
-
-.roster-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+.section-heading {
+  display: flex;
+  margin-bottom: 25px;
+  align-items: center;
+  justify-content: space-between;
   gap: 20px;
+}
+
+.section-heading h2 {
+  margin: 5px 0 0;
+  font-size: 26px;
+}
+
+.eyebrow {
+  font-size: 9px;
+  font-weight: 900;
+  color: var(--lime-dark);
+  letter-spacing: 1.2px;
+}
+
+.information-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.information-card {
+  display: flex;
+  min-height: 105px;
+  padding: 20px;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: #f8f9f7;
+}
+
+.information-icon {
+  display: grid;
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
+  place-items: center;
+  font-size: 24px;
+  border-radius: 14px;
+  background: var(--lime-soft);
+}
+
+.information-label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.information-value {
+  display: block;
+  font-size: 15px;
+}
+
+.players-count {
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #547626;
+  border-radius: 999px;
+  background: var(--lime-soft);
+}
+
+.players-grid {
+  display: grid;
+  gap: 11px;
 }
 
 .player-card {
   display: flex;
+  min-height: 82px;
+  padding: 14px 17px;
   align-items: center;
-  padding: 16px;
-  gap: 16px;
+  gap: 15px;
+  color: var(--text);
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--white);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.player-card:hover {
+  border-color: var(--lime);
+  transform: translateY(-2px);
+  box-shadow: 0 9px 24px rgba(20, 25, 20, 0.09);
 }
 
 .player-number {
-  font-size: 2rem;
-  font-weight: 800;
-  color: rgba(255, 255, 255, 0.1);
-  min-width: 50px;
-  text-align: center;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  place-items: center;
+  font-size: 20px;
+  font-weight: 900;
+  border: 1px solid #d7e8bd;
+  border-radius: 14px;
+  background: var(--lime-soft);
 }
 
-.player-info {
+.player-information {
+  min-width: 0;
   flex: 1;
 }
 
-.player-name {
-  font-size: 1.1rem;
-  margin-bottom: 4px;
+.player-information h3 {
+  margin: 0 0 7px;
+  font-size: 16px;
 }
 
-.player-position {
-  font-size: 0.9rem;
-  color: var(--accent);
+.player-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
-.empty-roster {
+.player-badge {
+  padding: 4px 8px;
+  font-size: 9px;
+  font-weight: 800;
+  color: #626a62;
+  border: 1px solid #e2e6df;
+  border-radius: 7px;
+  background: #f5f6f4;
+}
+
+.player-badge--position {
+  color: var(--lime-dark);
+  border-color: #d7e8bd;
+  background: var(--lime-soft);
+}
+
+.player-arrow {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--lime-dark);
+}
+
+.players-message {
+  padding: 40px 20px;
   text-align: center;
-  padding: 48px;
-  color: var(--text-secondary);
-  border-style: dashed;
+  color: var(--gray);
+  border: 1px dashed var(--border);
+  border-radius: 15px;
+  background: var(--white);
 }
 
-.back-action {
-  margin-top: 32px;
+.players-message h3 {
+  margin: 0 0 8px;
+  color: var(--text);
 }
 
-.mt-4 {
-  margin-top: 16px;
+.players-message p {
+  margin: 0 0 20px;
 }
 
-/* Reused Loader */
-.loader-container {
+.players-message--error {
+  color: var(--danger);
+  border-color: rgba(185, 56, 56, 0.3);
+}
+
+.empty-player-icon {
+  margin-bottom: 12px;
+  font-size: 40px;
+}
+
+.page-actions {
+  display: flex;
+  padding: 26px 42px;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--white);
+}
+
+.btn {
+  display: inline-flex;
+  min-height: 46px;
+  padding: 11px 21px;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 0;
+  border-radius: 12px;
+  text-decoration: none;
+  transition:
+    transform 180ms ease,
+    background 180ms ease;
+}
+
+.btn-primary {
+  color: var(--black);
+  background: var(--lime);
+}
+
+.btn-primary:hover {
+  background: #8fbd49;
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  color: var(--white);
+  background: var(--black);
+}
+
+.btn-secondary:hover {
+  background: #262926;
+  transform: translateY(-2px);
+}
+
+.loader-container,
+.small-loader {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 64px 0;
-  color: var(--text-secondary);
+  color: var(--gray);
+}
+
+.loader-container {
+  padding: 70px 20px;
+}
+
+.small-loader {
+  padding: 35px 20px;
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(255, 255, 255, 0.1);
-  border-left-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+  width: 44px;
+  height: 44px;
   margin-bottom: 16px;
+  border: 4px solid #dfe3dc;
+  border-top-color: var(--lime-dark);
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+.spinner-small {
+  width: 32px;
+  height: 32px;
+}
+
+.error-state,
+.empty-state {
+  padding: 70px 25px;
+  text-align: center;
+}
+
+.error-state {
+  color: var(--danger);
+}
+
+.error-state h1,
+.empty-state h1 {
+  margin: 0 0 10px;
+  color: var(--text);
+}
+
+.error-state p,
+.empty-state p {
+  margin: 0 0 22px;
+}
+
+.state-icon {
+  margin-bottom: 16px;
+  font-size: 50px;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 850px) {
+  .information-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .team-detail-page {
+    padding: 38px 14px;
+  }
+
+  .team-hero {
+    padding: 40px 22px;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .flag-container {
+    width: 130px;
+    height: 130px;
+  }
+
+  .team-flag {
+    font-size: 60px;
+  }
+
+  .hero-badges {
+    justify-content: center;
+  }
+
+  .team-name {
+    font-size: 42px;
+    letter-spacing: -2px;
+  }
+
+  .information-section,
+  .players-section {
+    padding: 28px 18px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .page-actions {
+    padding: 22px 18px;
+    flex-direction: column;
+  }
+
+  .page-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 450px) {
+  .player-card {
+    align-items: flex-start;
+  }
+
+  .player-arrow {
+    display: none;
+  }
 }
 </style>
