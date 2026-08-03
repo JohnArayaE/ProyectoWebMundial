@@ -7,7 +7,6 @@
 
     <main class="home-page">
       <section class="main-content">
-        <!-- Loading -->
         <div
           v-if="loadingAuth && !currentUser"
           class="state-card"
@@ -19,7 +18,6 @@
           <p>Estamos verificando tu sesión.</p>
         </div>
 
-        <!-- Usuario autenticado -->
         <template v-else-if="currentUser">
           <section class="welcome-section">
             <div>
@@ -96,13 +94,12 @@
                 </div>
               </div>
 
-              <button
+              <NuxtLink
+                to="/profile"
                 class="edit-button"
-                type="button"
-                disabled
               >
-                Editar perfil próximamente
-              </button>
+                Editar perfil
+              </NuxtLink>
             </article>
 
             <article class="summary-card">
@@ -122,7 +119,7 @@
               </strong>
 
               <p>
-                Podrás elegirla desde la edición de tu perfil.
+                Puedes cambiarla desde la edición de tu perfil.
               </p>
             </article>
 
@@ -146,7 +143,6 @@
           </section>
         </template>
 
-        <!-- Error -->
         <div
           v-else-if="errorAuth"
           class="state-card error-state"
@@ -422,16 +418,29 @@ watch(
 }
 
 .edit-button {
+  display: grid;
   width: 100%;
   min-height: 47px;
-  font: inherit;
   font-size: 13px;
   font-weight: 800;
-  color: #8a918a;
-  cursor: not-allowed;
-  border: 1px solid var(--border);
+  color: var(--white);
+  text-decoration: none;
+  place-items: center;
+  border: 1px solid var(--black);
   border-radius: 12px;
-  background: #f4f5f3;
+  background: var(--black);
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.edit-button:hover {
+  color: var(--black);
+  border-color: var(--lime);
+  background: var(--lime);
+  transform: translateY(-2px);
 }
 
 .summary-card {

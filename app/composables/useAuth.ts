@@ -17,7 +17,11 @@ import {
   serverTimestamp
 } from "firebase/firestore"
 
-import { auth, googleProvider, db } from "../../auth/auth"
+import {
+  auth,
+  googleProvider,
+  db
+} from "../../auth/auth"
 
 type AuthUser = {
   uid: string
@@ -43,24 +47,39 @@ const mapFirestoreUser = (
   data: Record<string, unknown>
 ): AuthUser => {
   return {
-    uid: typeof data.uid === "string" ? data.uid : "",
-    name: typeof data.name === "string" ? data.name : "",
-    email: typeof data.email === "string" ? data.email : "",
+    uid:
+      typeof data.uid === "string"
+        ? data.uid
+        : "",
+
+    name:
+      typeof data.name === "string"
+        ? data.name
+        : "",
+
+    email:
+      typeof data.email === "string"
+        ? data.email
+        : "",
+
     favoriteTeam:
       typeof data.favoriteTeam === "string"
         ? data.favoriteTeam
         : "",
+
     points:
       typeof data.points === "number"
         ? data.points
         : 0,
+
     createdAt: data.createdAt,
     updatedAt: data.updatedAt
   }
 }
 
 /**
- * Obtiene un mensaje seguro a partir de un error desconocido.
+ * Obtiene un mensaje seguro a partir
+ * de un error desconocido.
  */
 const getErrorMessage = (
   error: unknown,
@@ -80,13 +99,20 @@ export const useAuth = () => {
    * Busca el perfil del usuario en Firestore.
    *
    * Si no existe, lo crea automáticamente.
-   * Si ya existe, carga los datos guardados anteriormente.
+   * Si ya existe, carga los datos guardados.
    */
   const loadOrCreateUserProfile = async (
     user: User
   ): Promise<void> => {
-    const userReference = doc(db, "users", user.uid)
-    const userSnapshot = await getDoc(userReference)
+    const userReference = doc(
+      db,
+      "users",
+      user.uid
+    )
+
+    const userSnapshot = await getDoc(
+      userReference
+    )
 
     if (!userSnapshot.exists()) {
       await setDoc(userReference, {
@@ -100,7 +126,9 @@ export const useAuth = () => {
       })
     }
 
-    const updatedSnapshot = await getDoc(userReference)
+    const updatedSnapshot = await getDoc(
+      userReference
+    )
 
     if (updatedSnapshot.exists()) {
       currentUser.value = mapFirestoreUser(
@@ -110,11 +138,14 @@ export const useAuth = () => {
   }
 
   /**
-   * Revisa si existe una sesión iniciada cuando
-   * la aplicación abre o se recarga.
+   * Revisa si existe una sesión iniciada
+   * cuando la aplicación abre o se recarga.
    */
   const initAuth = (): void => {
-    if (!import.meta.client || authInitialized) {
+    if (
+      !import.meta.client ||
+      authInitialized
+    ) {
       return
     }
 
@@ -175,7 +206,9 @@ export const useAuth = () => {
         googleProvider
       )
 
-      await loadOrCreateUserProfile(result.user)
+      await loadOrCreateUserProfile(
+        result.user
+      )
 
       await router.push("/")
     } catch (error: unknown) {
@@ -187,6 +220,63 @@ export const useAuth = () => {
       )
     } finally {
       loadingAuth.value = false
+    }
+  }
+
+  /**
+   * Actualiza únicamente el nombre,
+   * la selección principal y updatedAt.
+   */
+  const updateProfile = async (
+    name: string,
+    favoriteTeam: string
+  ): Promise<boolean> => {
+    if (!currentUser.value) {
+      errorAuth.value =
+        "No hay un usuario autenticado"
+
+      return false
+    }
+
+    try {
+      errorAuth.value = null
+
+      const cleanName = name.trim()
+
+      const userReference = doc(
+        db,
+        "users",
+        currentUser.value.uid
+      )
+
+      await setDoc(
+        userReference,
+        {
+          name: cleanName,
+          favoriteTeam,
+          updatedAt: serverTimestamp()
+        },
+        {
+          merge: true
+        }
+      )
+
+      currentUser.value = {
+        ...currentUser.value,
+        name: cleanName,
+        favoriteTeam
+      }
+
+      return true
+    } catch (error: unknown) {
+      console.error(error)
+
+      errorAuth.value = getErrorMessage(
+        error,
+        "No se pudo actualizar el perfil"
+      )
+
+      return false
     }
   }
 
@@ -221,6 +311,7 @@ export const useAuth = () => {
     errorAuth,
     initAuth,
     login,
+    updateProfile,
     logout
   }
 }
