@@ -28,6 +28,17 @@ export function useTeams() {
     }
   }
 
+  return {
+  teams,
+  loading,
+  error,
+  fetchTeams,
+  fetchTeamById,
+  createTeam,
+  updateTeam,
+  deleteTeam
+}
+
   async function fetchTeamById(id: string): Promise<Team | null> {
     loading.value = true
     error.value = null

@@ -246,6 +246,10 @@ const filteredTeams = computed(() => {
   padding: 24px;
   flex-direction: column;
   overflow: hidden;
+
+  color: var(--text);
+  text-decoration: none;
+
   transition:
     transform 180ms ease,
     border-color 180ms ease,
