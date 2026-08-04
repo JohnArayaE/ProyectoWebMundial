@@ -322,6 +322,15 @@
               </div>
 
               <div
+                v-if="standingsSyncError"
+                class="message warning-message"
+                role="alert"
+              >
+                <span>!</span>
+                <p>{{ standingsSyncError }}</p>
+              </div>
+
+              <div
                 v-if="successMessage"
                 class="message success-message"
                 role="status"
@@ -351,7 +360,7 @@
                 >
                   {{
                     saving
-                      ? "Guardando..."
+                      ? "Guardando y actualizando tabla..."
                       : editingId
                         ? "Actualizar partido"
                         : "Crear partido"
@@ -375,7 +384,7 @@
               <button
                 type="button"
                 class="refresh-button"
-                :disabled="loadingMatches"
+                :disabled="loadingMatches || saving"
                 @click="refetchMatches"
               >
                 Recargar
@@ -509,6 +518,7 @@ import { Timestamp } from "firebase/firestore"
 
 import { useAuth } from "../../composables/useAuth"
 import { useTeams } from "../../composables/useTeams"
+import { useStandings } from "../../composables/useStandings"
 
 import {
   useMatches,
@@ -561,6 +571,10 @@ const {
   refetchMatches
 } = useMatches()
 
+const {
+  recalculateGroupStandings
+} = useStandings()
+
 const stages: MatchStage[] = [
   "Fase de grupos",
   "Dieciseisavos",
@@ -611,14 +625,24 @@ const form = reactive<MatchForm>(
 )
 
 const editingId = ref<string | null>(null)
+
+/**
+ * Guarda una copia del partido que se está editando.
+ *
+ * Esto permite recalcular el grupo anterior cuando:
+ *
+ * - El partido cambia de grupo.
+ * - El partido deja de ser de fase de grupos.
+ */
+const originalEditingMatch = ref<Match | null>(
+  null
+)
+
 const saving = ref(false)
 const formError = ref("")
 const successMessage = ref("")
+const standingsSyncError = ref("")
 
-/**
- * Indica que debe elegirse un grupo antes
- * de poder seleccionar las selecciones.
- */
 const requiresGroupSelection = computed<boolean>(() => {
   return (
     form.stage === "Fase de grupos" &&
@@ -626,10 +650,6 @@ const requiresGroupSelection = computed<boolean>(() => {
   )
 })
 
-/**
- * Selecciones disponibles según la fase
- * y el grupo elegido.
- */
 const selectableTeams = computed(() => {
   if (
     form.stage === "Fase de grupos" &&
@@ -643,20 +663,12 @@ const selectableTeams = computed(() => {
   return teams.value
 })
 
-/**
- * Evita seleccionar como local el equipo
- * que ya está seleccionado como visitante.
- */
 const availableHomeTeams = computed(() => {
   return selectableTeams.value.filter(
     team => team.id !== form.awayTeamId
   )
 })
 
-/**
- * Evita seleccionar como visitante el equipo
- * que ya está seleccionado como local.
- */
 const availableAwayTeams = computed(() => {
   return selectableTeams.value.filter(
     team => team.id !== form.homeTeamId
@@ -679,6 +691,73 @@ const getTeamIdByName = (
       team => team.name === teamName
     )?.id ?? ""
   )
+}
+
+/**
+ * Devuelve el grupo que debe recalcularse
+ * para un partido de fase de grupos.
+ */
+const getStandingGroup = (
+  match: {
+    stage: MatchStage
+    group: string
+  }
+): string => {
+  if (
+    match.stage !== "Fase de grupos" ||
+    !match.group
+  ) {
+    return ""
+  }
+
+  return match.group
+    .trim()
+    .toUpperCase()
+}
+
+/**
+ * Recalcula todos los grupos afectados.
+ *
+ * Set evita recalcular dos veces el mismo grupo.
+ */
+const recalculateAffectedGroups = async (
+  affectedGroups: string[]
+): Promise<boolean> => {
+  const uniqueGroups = [
+    ...new Set(
+      affectedGroups
+        .map(group => {
+          return group
+            .trim()
+            .toUpperCase()
+        })
+        .filter(group => group !== "")
+    )
+  ]
+
+  if (uniqueGroups.length === 0) {
+    return true
+  }
+
+  try {
+    for (const group of uniqueGroups) {
+      await recalculateGroupStandings(
+        group
+      )
+    }
+
+    return true
+  } catch (caughtError) {
+    standingsSyncError.value =
+      "El partido sí fue guardado, pero no se pudo actualizar automáticamente la tabla de posiciones. Puedes recalcularla desde la página del grupo."
+
+    console.error(
+      "[manage matches] recalculateAffectedGroups:",
+      caughtError
+    )
+
+    return false
+  }
 }
 
 const getKickoffDate = (
@@ -931,12 +1010,16 @@ const resetForm = (): void => {
   )
 
   editingId.value = null
+  originalEditingMatch.value = null
+
   formError.value = ""
+  standingsSyncError.value = ""
   successMessage.value = ""
 }
 
 const saveMatch = async (): Promise<void> => {
   successMessage.value = ""
+  standingsSyncError.value = ""
 
   if (!validateForm()) {
     return
@@ -946,20 +1029,72 @@ const saveMatch = async (): Promise<void> => {
     saving.value = true
 
     const matchData = buildMatchData()
+    const affectedGroups: string[] = []
 
     if (editingId.value) {
+      /**
+       * Guarda el grupo anterior.
+       *
+       * Es necesario si el partido cambia
+       * de grupo o de fase.
+       */
+      if (originalEditingMatch.value) {
+        const previousGroup =
+          getStandingGroup(
+            originalEditingMatch.value
+          )
+
+        if (previousGroup) {
+          affectedGroups.push(
+            previousGroup
+          )
+        }
+      }
+
       await updateMatch(
         editingId.value,
         matchData
       )
 
+      const newGroup =
+        getStandingGroup(matchData)
+
+      if (newGroup) {
+        affectedGroups.push(
+          newGroup
+        )
+      }
+
+      const standingsUpdated =
+        await recalculateAffectedGroups(
+          affectedGroups
+        )
+
       successMessage.value =
-        "El partido fue actualizado correctamente."
+        standingsUpdated
+          ? "El partido y la tabla de posiciones fueron actualizados correctamente."
+          : "El partido fue actualizado correctamente."
     } else {
       await createMatch(matchData)
 
+      const newGroup =
+        getStandingGroup(matchData)
+
+      if (newGroup) {
+        affectedGroups.push(
+          newGroup
+        )
+      }
+
+      const standingsUpdated =
+        await recalculateAffectedGroups(
+          affectedGroups
+        )
+
       successMessage.value =
-        "El partido fue creado correctamente."
+        standingsUpdated
+          ? "El partido fue creado y la tabla de posiciones fue actualizada."
+          : "El partido fue creado correctamente."
     }
 
     Object.assign(
@@ -968,10 +1103,16 @@ const saveMatch = async (): Promise<void> => {
     )
 
     editingId.value = null
-  } catch (error) {
+    originalEditingMatch.value = null
+  } catch (caughtError) {
+    formError.value =
+      caughtError instanceof Error
+        ? caughtError.message
+        : "No se pudo guardar el partido."
+
     console.error(
       "[manage matches] saveMatch:",
-      error
+      caughtError
     )
   } finally {
     saving.value = false
@@ -985,6 +1126,14 @@ const startEditing = (
     match as MatchWithOptionalIds
 
   editingId.value = match.id
+
+  /**
+   * Conserva el grupo y la fase anteriores
+   * antes de que el usuario los modifique.
+   */
+  originalEditingMatch.value = {
+    ...match
+  }
 
   form.group = match.group
   form.stage = match.stage
@@ -1011,6 +1160,7 @@ const startEditing = (
   form.status = match.status
 
   formError.value = ""
+  standingsSyncError.value = ""
   successMessage.value = ""
 
   window.scrollTo({
@@ -1030,18 +1180,48 @@ const removeMatch = async (
     return
   }
 
+  successMessage.value = ""
+  formError.value = ""
+  standingsSyncError.value = ""
+
   try {
     saving.value = true
 
+    const affectedGroup =
+      getStandingGroup(match)
+
     await deleteMatch(match.id)
 
+    const standingsUpdated =
+      await recalculateAffectedGroups(
+        affectedGroup
+          ? [affectedGroup]
+          : []
+      )
+
     if (editingId.value === match.id) {
-      resetForm()
+      Object.assign(
+        form,
+        createEmptyForm()
+      )
+
+      editingId.value = null
+      originalEditingMatch.value = null
     }
-  } catch (error) {
+
+    successMessage.value =
+      standingsUpdated
+        ? "El partido fue eliminado y la tabla de posiciones fue actualizada."
+        : "El partido fue eliminado correctamente."
+  } catch (caughtError) {
+    formError.value =
+      caughtError instanceof Error
+        ? caughtError.message
+        : "No se pudo eliminar el partido."
+
     console.error(
       "[manage matches] removeMatch:",
-      error
+      caughtError
     )
   } finally {
     saving.value = false
@@ -1062,9 +1242,6 @@ const getStatusClass = (
   return "scheduled-status"
 }
 
-/**
- * Las rondas eliminatorias no utilizan grupo.
- */
 watch(
   () => form.stage,
   stage => {
@@ -1074,10 +1251,6 @@ watch(
   }
 )
 
-/**
- * Al cambiar de grupo, elimina cualquier
- * selección que pertenezca al grupo anterior.
- */
 watch(
   () => form.group,
   group => {
@@ -1112,10 +1285,6 @@ watch(
   }
 )
 
-/**
- * Los partidos programados siempre empiezan
- * con marcador cero a cero.
- */
 watch(
   () => form.status,
   status => {
@@ -1342,6 +1511,17 @@ onMounted(async () => {
 .error-message span {
   color: white;
   background: #b83a3a;
+}
+
+.warning-message {
+  color: #745b16;
+  border: 1px solid #ead28a;
+  background: #fff8df;
+}
+
+.warning-message span {
+  color: white;
+  background: #b28b26;
 }
 
 .success-message {
