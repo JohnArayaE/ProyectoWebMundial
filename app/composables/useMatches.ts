@@ -21,8 +21,13 @@ export type MatchStage =
 
 export interface Match {
   id: string
+
+  homeTeamId: string
   homeTeam: string
+
+  awayTeamId: string
   awayTeam: string
+
   group: string
   stage: MatchStage
   stadium: string
@@ -31,6 +36,7 @@ export interface Match {
   homeScore: number
   awayScore: number
   status: MatchStatus
+
   createdAt?: unknown
   updatedAt?: unknown
 }
@@ -118,7 +124,7 @@ export function useMatches() {
   /**
    * Busca un partido mediante su ID.
    *
-   * Se utilizará en la ruta:
+   * Se utiliza en la ruta:
    * /matches/[id]
    */
   async function fetchMatchById(
@@ -161,7 +167,11 @@ export function useMatches() {
       const result = await getCollection(
         "matches",
         [
-          where("group", "==", group)
+          where(
+            "group",
+            "==",
+            group
+          )
         ]
       ) as Match[]
 
@@ -201,7 +211,11 @@ export function useMatches() {
       const result = await getCollection(
         "matches",
         [
-          where("stage", "==", stage)
+          where(
+            "stage",
+            "==",
+            stage
+          )
         ]
       ) as Match[]
 
@@ -241,7 +255,11 @@ export function useMatches() {
       const result = await getCollection(
         "matches",
         [
-          where("status", "==", status)
+          where(
+            "status",
+            "==",
+            status
+          )
         ]
       ) as Match[]
 
@@ -268,13 +286,13 @@ export function useMatches() {
   }
 
   /**
-   * Obtiene los partidos de una selección.
+   * Obtiene todos los partidos de una selección.
    *
-   * Consulta tanto homeTeam como awayTeam
-   * mediante where().
+   * Consulta tanto homeTeamId como awayTeamId
+   * utilizando el ID del documento del equipo.
    */
   async function fetchMatchesByTeam(
-    teamName: string
+    teamId: string
   ): Promise<Match[]> {
     loading.value = true
     error.value = null
@@ -288,9 +306,9 @@ export function useMatches() {
           "matches",
           [
             where(
-              "homeTeam",
+              "homeTeamId",
               "==",
-              teamName
+              teamId
             )
           ]
         ) as Promise<Match[]>,
@@ -299,23 +317,29 @@ export function useMatches() {
           "matches",
           [
             where(
-              "awayTeam",
+              "awayTeamId",
               "==",
-              teamName
+              teamId
             )
           ]
         ) as Promise<Match[]>
       ])
 
+      /*
+       * Map evita que un mismo partido aparezca
+       * duplicado en el resultado.
+       */
       const uniqueMatches = new Map<
         string,
         Match
       >()
 
-      for (const match of [
-        ...homeMatches,
-        ...awayMatches
-      ]) {
+      for (
+        const match of [
+          ...homeMatches,
+          ...awayMatches
+        ]
+      ) {
         uniqueMatches.set(
           match.id,
           match
@@ -323,7 +347,9 @@ export function useMatches() {
       }
 
       matches.value = sortMatchesByKickoff(
-        Array.from(uniqueMatches.values())
+        Array.from(
+          uniqueMatches.values()
+        )
       )
 
       return matches.value
@@ -337,6 +363,59 @@ export function useMatches() {
       )
 
       matches.value = []
+
+      return []
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Obtiene únicamente los partidos
+   * finalizados de la fase de grupos.
+   *
+   * Esta consulta se utilizará posteriormente
+   * para calcular las tablas de posiciones.
+   */
+  async function fetchFinishedGroupMatches(
+    group: string
+  ): Promise<Match[]> {
+    loading.value = true
+    error.value = null
+
+    try {
+      const result = await getCollection(
+        "matches",
+        [
+          where(
+            "group",
+            "==",
+            group
+          ),
+          where(
+            "stage",
+            "==",
+            "Fase de grupos"
+          ),
+          where(
+            "status",
+            "==",
+            "Finalizado"
+          )
+        ]
+      ) as Match[]
+
+      return sortMatchesByKickoff(
+        result
+      )
+    } catch (caughtError) {
+      error.value =
+        "No se pudieron cargar los resultados finalizados del grupo."
+
+      console.error(
+        "[useMatches] fetchFinishedGroupMatches:",
+        caughtError
+      )
 
       return []
     } finally {
@@ -467,6 +546,7 @@ export function useMatches() {
     fetchMatchesByStage,
     fetchMatchesByStatus,
     fetchMatchesByTeam,
+    fetchFinishedGroupMatches,
     createMatch,
     updateMatch,
     deleteMatch,

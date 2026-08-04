@@ -8,7 +8,7 @@
     <main class="matches-page">
       <section class="main-content">
         <header class="page-header">
-          <div>
+          <div class="page-title">
             <span class="page-label">
               Mundial 2026
             </span>
@@ -20,6 +20,33 @@
               estados del torneo.
             </p>
           </div>
+
+          <NuxtLink
+            to="/matches/manage"
+            class="manage-button"
+          >
+            <span
+              class="manage-button-icon"
+              aria-hidden="true"
+            >
+              +
+            </span>
+
+            <span class="manage-button-content">
+              <strong>Gestionar partidos</strong>
+
+              <small>
+                Crear, editar o eliminar
+              </small>
+            </span>
+
+            <span
+              class="manage-button-arrow"
+              aria-hidden="true"
+            >
+              →
+            </span>
+          </NuxtLink>
         </header>
 
         <section class="filters-card">
@@ -198,13 +225,22 @@
             colección matches.
           </p>
 
-          <button
-            type="button"
-            class="retry-button"
-            @click="refetchMatches"
-          >
-            Recargar
-          </button>
+          <div class="empty-actions">
+            <NuxtLink
+              to="/matches/manage"
+              class="create-match-button"
+            >
+              Crear primer partido
+            </NuxtLink>
+
+            <button
+              type="button"
+              class="secondary-retry-button"
+              @click="refetchMatches"
+            >
+              Recargar
+            </button>
+          </div>
         </section>
 
         <!-- No hay resultados con los filtros -->
@@ -669,7 +705,15 @@ onMounted(async () => {
 }
 
 .page-header {
+  display: flex;
+  gap: 36px;
+  align-items: flex-end;
+  justify-content: space-between;
   margin-bottom: 32px;
+}
+
+.page-title {
+  min-width: 0;
 }
 
 .page-label {
@@ -697,6 +741,83 @@ onMounted(async () => {
   font-size: 15px;
   line-height: 1.65;
   color: var(--gray);
+}
+
+.manage-button {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  min-width: 255px;
+  min-height: 68px;
+  padding: 13px 15px;
+  color: var(--white);
+  text-decoration: none;
+  border: 1px solid var(--black);
+  border-radius: 17px;
+  background: var(--black);
+  box-shadow: 0 14px 30px rgba(11, 13, 12, 0.16);
+  transition:
+    color 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.manage-button-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  font-size: 25px;
+  font-weight: 500;
+  color: var(--black);
+  place-items: center;
+  border-radius: 12px;
+  background: var(--lime);
+}
+
+.manage-button-content {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+}
+
+.manage-button-content strong {
+  font-size: 12px;
+}
+
+.manage-button-content small {
+  font-size: 10px;
+  color: #bfc5bd;
+}
+
+.manage-button-arrow {
+  font-size: 20px;
+  color: var(--lime);
+  transition: transform 180ms ease;
+}
+
+.manage-button:hover {
+  color: var(--black);
+  border-color: var(--lime);
+  background: var(--lime);
+  box-shadow: 0 16px 35px rgba(114, 156, 52, 0.22);
+  transform: translateY(-2px);
+}
+
+.manage-button:hover .manage-button-icon {
+  color: var(--white);
+  background: var(--black);
+}
+
+.manage-button:hover .manage-button-content small {
+  color: #44572b;
+}
+
+.manage-button:hover .manage-button-arrow {
+  color: var(--black);
+  transform: translateX(4px);
 }
 
 .filters-card {
@@ -765,6 +886,11 @@ onMounted(async () => {
   background: #f5f6f4;
 }
 
+.clear-button:hover {
+  border-color: var(--lime-dark);
+  background: var(--lime-soft);
+}
+
 .favorites-error {
   display: flex;
   gap: 11px;
@@ -808,6 +934,16 @@ onMounted(async () => {
   border-radius: 20px;
   background: var(--white);
   box-shadow: 0 12px 35px rgba(20, 25, 20, 0.06);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.match-card:hover {
+  border-color: #cbd3c6;
+  box-shadow: 0 18px 42px rgba(20, 25, 20, 0.09);
+  transform: translateY(-3px);
 }
 
 .match-header {
@@ -1048,18 +1184,55 @@ onMounted(async () => {
   background: #b93838;
 }
 
-.retry-button {
+.retry-button,
+.create-match-button,
+.secondary-retry-button {
+  display: grid;
   min-height: 43px;
   padding: 10px 18px;
-  margin: 22px auto 0;
   font: inherit;
   font-size: 12px;
   font-weight: 800;
-  color: var(--white);
+  text-decoration: none;
   cursor: pointer;
-  border: 0;
+  place-items: center;
   border-radius: 10px;
+}
+
+.retry-button,
+.create-match-button {
+  color: var(--white);
+  border: 1px solid var(--black);
   background: var(--black);
+}
+
+.retry-button {
+  margin: 22px auto 0;
+}
+
+.retry-button:hover,
+.create-match-button:hover {
+  color: var(--black);
+  border-color: var(--lime);
+  background: var(--lime);
+}
+
+.empty-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 22px;
+}
+
+.secondary-retry-button {
+  color: var(--text);
+  border: 1px solid var(--border);
+  background: var(--white);
+}
+
+.secondary-retry-button:hover {
+  border-color: var(--lime-dark);
+  background: var(--lime-soft);
 }
 
 @keyframes spin {
@@ -1069,12 +1242,31 @@ onMounted(async () => {
 }
 
 @media (max-width: 900px) {
+  .page-header {
+    align-items: stretch;
+  }
+
+  .manage-button {
+    min-width: 225px;
+  }
+
   .filters-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
   .matches-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .page-header {
+    display: grid;
+  }
+
+  .manage-button {
+    width: 100%;
+    min-width: 0;
   }
 }
 
@@ -1103,6 +1295,10 @@ onMounted(async () => {
 
   .card-actions {
     grid-template-columns: 1fr;
+  }
+
+  .empty-actions {
+    display: grid;
   }
 }
 </style>
