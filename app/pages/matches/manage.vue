@@ -35,7 +35,11 @@
             <div class="card-header">
               <div>
                 <span class="card-label">
-                  {{ editingId ? "Editar partido" : "Nuevo partido" }}
+                  {{
+                    editingId
+                      ? "Editar partido"
+                      : "Nuevo partido"
+                  }}
                 </span>
 
                 <h2>
@@ -56,56 +60,7 @@
               class="match-form"
               @submit.prevent="saveMatch"
             >
-              <div class="two-columns">
-                <div class="form-group">
-                  <label for="homeTeam">
-                    Selección local
-                  </label>
-
-                  <select
-                    id="homeTeam"
-                    v-model="form.homeTeam"
-                    :disabled="saving || loadingTeams"
-                  >
-                    <option value="">
-                      Selecciona el equipo local
-                    </option>
-
-                    <option
-                      v-for="team in teams"
-                      :key="team.id"
-                      :value="team.name"
-                    >
-                      {{ team.name }}
-                    </option>
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label for="awayTeam">
-                    Selección visitante
-                  </label>
-
-                  <select
-                    id="awayTeam"
-                    v-model="form.awayTeam"
-                    :disabled="saving || loadingTeams"
-                  >
-                    <option value="">
-                      Selecciona el equipo visitante
-                    </option>
-
-                    <option
-                      v-for="team in teams"
-                      :key="team.id"
-                      :value="team.name"
-                    >
-                      {{ team.name }}
-                    </option>
-                  </select>
-                </div>
-              </div>
-
+              <!-- Fase y grupo -->
               <div class="two-columns">
                 <div class="form-group">
                   <label for="stage">
@@ -163,6 +118,74 @@
                 </div>
               </div>
 
+              <!-- Selecciones -->
+              <div class="two-columns">
+                <div class="form-group">
+                  <label for="homeTeamId">
+                    Selección local
+                  </label>
+
+                  <select
+                    id="homeTeamId"
+                    v-model="form.homeTeamId"
+                    :disabled="
+                      saving ||
+                      loadingTeams ||
+                      requiresGroupSelection
+                    "
+                  >
+                    <option value="">
+                      {{
+                        requiresGroupSelection
+                          ? "Selecciona primero un grupo"
+                          : "Selecciona el equipo local"
+                      }}
+                    </option>
+
+                    <option
+                      v-for="team in availableHomeTeams"
+                      :key="team.id"
+                      :value="team.id"
+                    >
+                      {{ team.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="awayTeamId">
+                    Selección visitante
+                  </label>
+
+                  <select
+                    id="awayTeamId"
+                    v-model="form.awayTeamId"
+                    :disabled="
+                      saving ||
+                      loadingTeams ||
+                      requiresGroupSelection
+                    "
+                  >
+                    <option value="">
+                      {{
+                        requiresGroupSelection
+                          ? "Selecciona primero un grupo"
+                          : "Selecciona el equipo visitante"
+                      }}
+                    </option>
+
+                    <option
+                      v-for="team in availableAwayTeams"
+                      :key="team.id"
+                      :value="team.id"
+                    >
+                      {{ team.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Estadio y ciudad -->
               <div class="two-columns">
                 <div class="form-group">
                   <label for="stadium">
@@ -193,6 +216,7 @@
                 </div>
               </div>
 
+              <!-- Fecha y hora -->
               <div class="two-columns">
                 <div class="form-group">
                   <label for="kickoffDate">
@@ -221,6 +245,7 @@
                 </div>
               </div>
 
+              <!-- Estado -->
               <div class="form-group">
                 <label for="status">
                   Estado
@@ -241,6 +266,7 @@
                 </select>
               </div>
 
+              <!-- Marcador -->
               <div class="two-columns">
                 <div class="form-group">
                   <label for="homeScore">
@@ -357,7 +383,10 @@
             </div>
 
             <div
-              v-if="loadingMatches && matches.length === 0"
+              v-if="
+                loadingMatches &&
+                matches.length === 0
+              "
               class="state-box"
             >
               <span class="spinner" />
@@ -365,7 +394,10 @@
             </div>
 
             <div
-              v-else-if="matchesError && matches.length === 0"
+              v-else-if="
+                matchesError &&
+                matches.length === 0
+              "
               class="state-box"
             >
               <strong>No se pudieron cargar</strong>
@@ -408,14 +440,18 @@
 
                   <span
                     class="status"
-                    :class="getStatusClass(match.status)"
+                    :class="
+                      getStatusClass(match.status)
+                    "
                   >
                     {{ match.status }}
                   </span>
                 </div>
 
                 <div class="match-teams">
-                  <strong>{{ match.homeTeam }}</strong>
+                  <strong>
+                    {{ match.homeTeam }}
+                  </strong>
 
                   <span>
                     {{
@@ -425,7 +461,9 @@
                     }}
                   </span>
 
-                  <strong>{{ match.awayTeam }}</strong>
+                  <strong>
+                    {{ match.awayTeam }}
+                  </strong>
                 </div>
 
                 <p class="match-location">
@@ -481,8 +519,8 @@ import {
 } from "../../composables/useMatches"
 
 type MatchForm = {
-  homeTeam: string
-  awayTeam: string
+  homeTeamId: string
+  awayTeamId: string
   group: string
   stage: MatchStage | ""
   stadium: string
@@ -492,6 +530,11 @@ type MatchForm = {
   homeScore: number
   awayScore: number
   status: MatchStatus
+}
+
+type MatchWithOptionalIds = Match & {
+  homeTeamId?: string
+  awayTeamId?: string
 }
 
 const {
@@ -550,8 +593,8 @@ const groups = [
 ]
 
 const createEmptyForm = (): MatchForm => ({
-  homeTeam: "",
-  awayTeam: "",
+  homeTeamId: "",
+  awayTeamId: "",
   group: "",
   stage: "",
   stadium: "",
@@ -571,6 +614,72 @@ const editingId = ref<string | null>(null)
 const saving = ref(false)
 const formError = ref("")
 const successMessage = ref("")
+
+/**
+ * Indica que debe elegirse un grupo antes
+ * de poder seleccionar las selecciones.
+ */
+const requiresGroupSelection = computed<boolean>(() => {
+  return (
+    form.stage === "Fase de grupos" &&
+    !form.group
+  )
+})
+
+/**
+ * Selecciones disponibles según la fase
+ * y el grupo elegido.
+ */
+const selectableTeams = computed(() => {
+  if (
+    form.stage === "Fase de grupos" &&
+    form.group
+  ) {
+    return teams.value.filter(
+      team => team.group === form.group
+    )
+  }
+
+  return teams.value
+})
+
+/**
+ * Evita seleccionar como local el equipo
+ * que ya está seleccionado como visitante.
+ */
+const availableHomeTeams = computed(() => {
+  return selectableTeams.value.filter(
+    team => team.id !== form.awayTeamId
+  )
+})
+
+/**
+ * Evita seleccionar como visitante el equipo
+ * que ya está seleccionado como local.
+ */
+const availableAwayTeams = computed(() => {
+  return selectableTeams.value.filter(
+    team => team.id !== form.homeTeamId
+  )
+})
+
+const getTeamById = (
+  teamId: string
+) => {
+  return teams.value.find(
+    team => team.id === teamId
+  )
+}
+
+const getTeamIdByName = (
+  teamName: string
+): string => {
+  return (
+    teams.value.find(
+      team => team.name === teamName
+    )?.id ?? ""
+  )
+}
 
 const getKickoffDate = (
   kickoff: unknown
@@ -659,16 +768,37 @@ const formatKickoff = (
 const validateForm = (): boolean => {
   formError.value = ""
 
-  if (!form.homeTeam || !form.awayTeam) {
+  if (
+    !form.homeTeamId ||
+    !form.awayTeamId
+  ) {
     formError.value =
       "Debes seleccionar ambos equipos."
 
     return false
   }
 
-  if (form.homeTeam === form.awayTeam) {
+  if (
+    form.homeTeamId ===
+    form.awayTeamId
+  ) {
     formError.value =
       "El equipo local y visitante deben ser diferentes."
+
+    return false
+  }
+
+  const homeTeam = getTeamById(
+    form.homeTeamId
+  )
+
+  const awayTeam = getTeamById(
+    form.awayTeamId
+  )
+
+  if (!homeTeam || !awayTeam) {
+    formError.value =
+      "Una de las selecciones escogidas no existe."
 
     return false
   }
@@ -690,6 +820,19 @@ const validateForm = (): boolean => {
     return false
   }
 
+  if (
+    form.stage === "Fase de grupos" &&
+    (
+      homeTeam.group !== form.group ||
+      awayTeam.group !== form.group
+    )
+  ) {
+    formError.value =
+      "Ambas selecciones deben pertenecer al grupo seleccionado."
+
+    return false
+  }
+
   if (!form.stadium.trim()) {
     formError.value =
       "Debes escribir el estadio."
@@ -704,7 +847,10 @@ const validateForm = (): boolean => {
     return false
   }
 
-  if (!form.kickoffDate || !form.kickoffTime) {
+  if (
+    !form.kickoffDate ||
+    !form.kickoffTime
+  ) {
     formError.value =
       "Debes seleccionar la fecha y la hora."
 
@@ -725,13 +871,30 @@ const validateForm = (): boolean => {
 }
 
 const buildMatchData = (): MatchInput => {
+  const homeTeam = getTeamById(
+    form.homeTeamId
+  )
+
+  const awayTeam = getTeamById(
+    form.awayTeamId
+  )
+
+  if (!homeTeam || !awayTeam) {
+    throw new Error(
+      "No se pudieron encontrar las selecciones."
+    )
+  }
+
   const kickoffDate = new Date(
     `${form.kickoffDate}T${form.kickoffTime}:00`
   )
 
-  return {
-    homeTeam: form.homeTeam,
-    awayTeam: form.awayTeam,
+  const matchData = {
+    homeTeamId: homeTeam.id,
+    homeTeam: homeTeam.name,
+
+    awayTeamId: awayTeam.id,
+    awayTeam: awayTeam.name,
 
     group:
       form.stage === "Fase de grupos"
@@ -741,7 +904,9 @@ const buildMatchData = (): MatchInput => {
     stage: form.stage as MatchStage,
     stadium: form.stadium.trim(),
     city: form.city.trim(),
-    kickoff: Timestamp.fromDate(kickoffDate),
+    kickoff: Timestamp.fromDate(
+      kickoffDate
+    ),
 
     homeScore:
       form.status === "Programado"
@@ -755,6 +920,8 @@ const buildMatchData = (): MatchInput => {
 
     status: form.status
   }
+
+  return matchData as MatchInput
 }
 
 const resetForm = (): void => {
@@ -814,12 +981,22 @@ const saveMatch = async (): Promise<void> => {
 const startEditing = (
   match: Match
 ): void => {
+  const matchWithIds =
+    match as MatchWithOptionalIds
+
   editingId.value = match.id
 
-  form.homeTeam = match.homeTeam
-  form.awayTeam = match.awayTeam
   form.group = match.group
   form.stage = match.stage
+
+  form.homeTeamId =
+    matchWithIds.homeTeamId ||
+    getTeamIdByName(match.homeTeam)
+
+  form.awayTeamId =
+    matchWithIds.awayTeamId ||
+    getTeamIdByName(match.awayTeam)
+
   form.stadium = match.stadium
   form.city = match.city
 
@@ -885,6 +1062,9 @@ const getStatusClass = (
   return "scheduled-status"
 }
 
+/**
+ * Las rondas eliminatorias no utilizan grupo.
+ */
 watch(
   () => form.stage,
   stage => {
@@ -894,6 +1074,48 @@ watch(
   }
 )
 
+/**
+ * Al cambiar de grupo, elimina cualquier
+ * selección que pertenezca al grupo anterior.
+ */
+watch(
+  () => form.group,
+  group => {
+    if (
+      form.stage !== "Fase de grupos" ||
+      !group
+    ) {
+      return
+    }
+
+    const homeTeam = getTeamById(
+      form.homeTeamId
+    )
+
+    const awayTeam = getTeamById(
+      form.awayTeamId
+    )
+
+    if (
+      homeTeam &&
+      homeTeam.group !== group
+    ) {
+      form.homeTeamId = ""
+    }
+
+    if (
+      awayTeam &&
+      awayTeam.group !== group
+    ) {
+      form.awayTeamId = ""
+    }
+  }
+)
+
+/**
+ * Los partidos programados siempre empiezan
+ * con marcador cero a cero.
+ */
 watch(
   () => form.status,
   status => {
