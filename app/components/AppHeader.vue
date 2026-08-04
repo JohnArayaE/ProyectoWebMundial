@@ -349,6 +349,13 @@ const navigationItems:
       icon: "⌂",
       matchPaths: ["/"]
     },
+
+      {
+      label: "Dashboard",
+      to: "/dashboard",
+      icon: "▤",
+      matchPaths: ["/dashboard"]
+      },
     {
       label: "Equipos",
       to: "/teams",
