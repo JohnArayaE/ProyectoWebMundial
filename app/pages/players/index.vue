@@ -1,6 +1,9 @@
 <template>
   <div class="page-layout">
-    <AppHeader />
+    <AppHeader
+      :loading="loadingAuth"
+      @logout="logout"
+    />
 
     <main class="players-page">
       <!-- Encabezado -->
@@ -213,6 +216,7 @@
 </template>
 
 <script setup>
+const { loadingAuth, logout } = useAuth();
 import {
   computed,
   onMounted,

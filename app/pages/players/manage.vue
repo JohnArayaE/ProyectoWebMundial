@@ -5,12 +5,18 @@
     <main class="manage-page">
       <!-- Encabezado -->
       <div class="header-section">
-        <h1 class="title">Gestión de Jugadores</h1>
+        <h1 class="title">
+          Gestión de Jugadores
+        </h1>
+
         <p class="subtitle">
           Crear, editar y eliminar jugadores del Mundial 2026
         </p>
 
-        <NuxtLink to="/players" class="btn btn-secondary back-link">
+        <NuxtLink
+          to="/players"
+          class="btn btn-secondary back-link"
+        >
           <span>&larr;</span>
           Ver lista de jugadores
         </NuxtLink>
@@ -19,15 +25,30 @@
       <!-- Formulario -->
       <div class="form-section glass">
         <h2 class="form-title">
-          <span>{{ editingPlayer ? "✏️" : "➕" }}</span>
-          {{ editingPlayer ? "Editar Jugador" : "Nuevo Jugador" }}
+          <span>
+            {{ editingPlayer ? "✏️" : "➕" }}
+          </span>
+
+          {{
+            editingPlayer
+              ? "Editar Jugador"
+              : "Nuevo Jugador"
+          }}
         </h2>
 
-        <form class="player-form" @submit.prevent="handleSubmit">
+        <form
+          class="player-form"
+          @submit.prevent="handleSubmit"
+        >
           <div class="form-grid">
             <!-- Nombre -->
             <div class="form-group">
-              <label for="name" class="form-label"> Nombre del jugador </label>
+              <label
+                for="name"
+                class="form-label"
+              >
+                Nombre del jugador
+              </label>
 
               <input
                 id="name"
@@ -41,7 +62,12 @@
 
             <!-- Selección -->
             <div class="form-group">
-              <label for="teamId" class="form-label"> Selección </label>
+              <label
+                for="teamId"
+                class="form-label"
+              >
+                Selección
+              </label>
 
               <select
                 id="teamId"
@@ -49,21 +75,40 @@
                 class="form-input"
                 required
               >
-                <option value="" disabled>Seleccionar equipo</option>
+                <option
+                  value=""
+                  disabled
+                >
+                  Seleccionar equipo
+                </option>
 
-                <option v-for="team in teams" :key="team.id" :value="team.id">
-                  {{ team.flag || "🏳️" }} {{ team.name }}
+                <option
+                  v-for="team in teams"
+                  :key="team.id"
+                  :value="team.id"
+                >
+                  {{ team.flag || "🏳️" }}
+                  {{ team.name }}
                 </option>
               </select>
 
-              <p v-if="!teamsLoading && teams.length === 0" class="field-hint">
+              <p
+                v-if="
+                  !teamsLoading &&
+                  teams.length === 0
+                "
+                class="field-hint"
+              >
                 Primero debes registrar al menos un equipo.
               </p>
             </div>
 
             <!-- Número -->
             <div class="form-group">
-              <label for="number" class="form-label">
+              <label
+                for="number"
+                class="form-label"
+              >
                 Número de camiseta
               </label>
 
@@ -75,13 +120,40 @@
                 placeholder="Ej: 10"
                 min="1"
                 max="99"
+                step="1"
+                required
+              />
+            </div>
+
+            <!-- Goles -->
+            <div class="form-group">
+              <label
+                for="goals"
+                class="form-label"
+              >
+                Goles anotados
+              </label>
+
+              <input
+                id="goals"
+                v-model.number="form.goals"
+                type="number"
+                class="form-input"
+                placeholder="Ej: 0"
+                min="0"
+                step="1"
                 required
               />
             </div>
 
             <!-- Posición -->
             <div class="form-group">
-              <label for="position" class="form-label"> Posición </label>
+              <label
+                for="position"
+                class="form-label"
+              >
+                Posición
+              </label>
 
               <select
                 id="position"
@@ -89,7 +161,12 @@
                 class="form-input"
                 required
               >
-                <option value="" disabled>Seleccionar posición</option>
+                <option
+                  value=""
+                  disabled
+                >
+                  Seleccionar posición
+                </option>
 
                 <option
                   v-for="position in positionOptions"
@@ -102,8 +179,13 @@
             </div>
 
             <!-- Club -->
-            <div class="form-group form-group--full">
-              <label for="club" class="form-label"> Club actual </label>
+            <div class="form-group">
+              <label
+                for="club"
+                class="form-label"
+              >
+                Club actual
+              </label>
 
               <input
                 id="club"
@@ -120,11 +202,21 @@
             <button
               type="submit"
               class="btn btn-primary"
-              :disabled="submitting || teams.length === 0"
+              :disabled="
+                submitting ||
+                teams.length === 0
+              "
             >
-              <span v-if="submitting" class="btn-spinner"></span>
+              <span
+                v-if="submitting"
+                class="btn-spinner"
+              ></span>
 
-              {{ editingPlayer ? "Guardar Cambios" : "Crear Jugador" }}
+              {{
+                editingPlayer
+                  ? "Guardar Cambios"
+                  : "Crear Jugador"
+              }}
             </button>
 
             <button
@@ -149,30 +241,62 @@
           </span>
         </h2>
 
-        <div v-if="pageLoading" class="loader-container">
+        <!-- Loading -->
+        <div
+          v-if="pageLoading"
+          class="loader-container"
+        >
           <div class="spinner"></div>
           <p>Cargando jugadores...</p>
         </div>
 
-        <div v-else-if="pageError" class="error-state glass">
+        <!-- Error -->
+        <div
+          v-else-if="pageError"
+          class="error-state glass"
+        >
           <p>⚠️ {{ pageError }}</p>
+
+          <button
+            type="button"
+            class="btn btn-secondary"
+            @click="refetchData"
+          >
+            Intentar de nuevo
+          </button>
         </div>
 
-        <div v-else-if="players.length === 0" class="empty-state glass">
-          <div class="empty-icon">👕</div>
-          <p>No hay jugadores registrados todavía.</p>
+        <!-- Empty State -->
+        <div
+          v-else-if="players.length === 0"
+          class="empty-state glass"
+        >
+          <div class="empty-icon">
+            👕
+          </div>
+
+          <p>
+            No hay jugadores registrados todavía.
+          </p>
+
           <p class="empty-hint">
-            Usa el formulario de arriba para agregar el primero.
+            Usa el formulario de arriba para agregar
+            el primero.
           </p>
         </div>
 
-        <div v-else class="players-list">
+        <!-- Jugadores -->
+        <div
+          v-else
+          class="players-list"
+        >
           <div
             v-for="player in players"
             :key="player.id"
             class="player-row glass"
             :class="{
-              'player-row--editing': editingPlayer?.id === player.id,
+              'player-row--editing':
+                editingPlayer?.id === player.id
             }"
           >
             <div class="player-row-main">
@@ -186,7 +310,9 @@
                 </h3>
 
                 <div class="player-row-meta">
-                  <span class="meta-badge meta-badge--team">
+                  <span
+                    class="meta-badge meta-badge--team"
+                  >
                     {{ getTeamName(player.teamId) }}
                   </span>
 
@@ -194,8 +320,21 @@
                     {{ player.position }}
                   </span>
 
-                  <span class="meta-badge meta-badge--club">
+                  <span
+                    class="meta-badge meta-badge--club"
+                  >
                     {{ player.club }}
+                  </span>
+
+                  <span
+                    class="meta-badge meta-badge--goals"
+                  >
+                    ⚽ {{ player.goals }}
+                    {{
+                      player.goals === 1
+                        ? "gol"
+                        : "goles"
+                    }}
                   </span>
                 </div>
               </div>
@@ -233,14 +372,22 @@
             @click.self="playerToDelete = null"
           >
             <div class="modal glass">
-              <div class="modal-icon">⚠️</div>
+              <div class="modal-icon">
+                ⚠️
+              </div>
 
-              <h3 class="modal-title">¿Eliminar jugador?</h3>
+              <h3 class="modal-title">
+                ¿Eliminar jugador?
+              </h3>
 
               <p class="modal-text">
                 Estás a punto de eliminar a
-                <strong>{{ playerToDelete.name }}</strong
-                >. Esta acción no se puede deshacer.
+
+                <strong>
+                  {{ playerToDelete.name }}
+                </strong>.
+
+                Esta acción no se puede deshacer.
               </p>
 
               <div class="modal-actions">
@@ -250,7 +397,11 @@
                   :disabled="deleting"
                   @click="executeDelete"
                 >
-                  <span v-if="deleting" class="btn-spinner"></span>
+                  <span
+                    v-if="deleting"
+                    class="btn-spinner"
+                  ></span>
+
                   Sí, eliminar
                 </button>
 
@@ -271,12 +422,22 @@
       <!-- Notificación -->
       <Teleport to="body">
         <Transition name="toast">
-          <div v-if="toast.show" class="toast" :class="`toast--${toast.type}`">
+          <div
+            v-if="toast.show"
+            class="toast"
+            :class="`toast--${toast.type}`"
+          >
             <span>
-              {{ toast.type === "success" ? "✅" : "❌" }}
+              {{
+                toast.type === "success"
+                  ? "✅"
+                  : "❌"
+              }}
             </span>
 
-            <span>{{ toast.message }}</span>
+            <span>
+              {{ toast.message }}
+            </span>
           </div>
         </Transition>
       </Teleport>
@@ -287,7 +448,13 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref
+} from "vue"
 
 const {
   players,
@@ -296,17 +463,22 @@ const {
   fetchPlayers,
   createPlayer,
   updatePlayer,
-  deletePlayer,
-} = usePlayers();
+  deletePlayer
+} = usePlayers()
 
 const {
   teams,
   loading: teamsLoading,
   error: teamsError,
-  fetchTeams,
-} = useTeams();
+  fetchTeams
+} = useTeams()
 
-const positionOptions = ["Portero", "Defensa", "Mediocampista", "Delantero"];
+const positionOptions = [
+  "Portero",
+  "Defensa",
+  "Mediocampista",
+  "Delantero"
+]
 
 const defaultForm = {
   teamId: "",
@@ -314,63 +486,84 @@ const defaultForm = {
   number: null,
   position: "",
   club: "",
-};
+  goals: 0
+}
 
-const form = reactive({ ...defaultForm });
+const form = reactive({
+  ...defaultForm
+})
 
-const editingPlayer = ref(null);
-const playerToDelete = ref(null);
+const editingPlayer = ref(null)
+const playerToDelete = ref(null)
 
-const submitting = ref(false);
-const deleting = ref(false);
+const submitting = ref(false)
+const deleting = ref(false)
 
 const toast = reactive({
   show: false,
   message: "",
-  type: "success",
-});
+  type: "success"
+})
 
 const pageLoading = computed(() => {
-  return playersLoading.value || teamsLoading.value;
-});
+  return (
+    playersLoading.value ||
+    teamsLoading.value
+  )
+})
 
 const pageError = computed(() => {
-  return playersError.value || teamsError.value;
-});
+  return (
+    playersError.value ||
+    teamsError.value
+  )
+})
 
 const teamNames = computed(() => {
   return Object.fromEntries(
-    teams.value.map((team) => [team.id, `${team.flag || "🏳️"} ${team.name}`]),
-  );
-});
+    teams.value.map((team) => [
+      team.id,
+      `${team.flag || "🏳️"} ${team.name}`
+    ])
+  )
+})
 
-let toastTimeout = null;
+let toastTimeout = null
 
 function getTeamName(teamId) {
-  return teamNames.value[teamId] || "Selección no encontrada";
+  return (
+    teamNames.value[teamId] ||
+    "Selección no encontrada"
+  )
 }
 
-function showToast(message, type = "success") {
+function showToast(
+  message,
+  type = "success"
+) {
   if (toastTimeout) {
-    clearTimeout(toastTimeout);
+    clearTimeout(toastTimeout)
   }
 
-  toast.show = true;
-  toast.message = message;
-  toast.type = type;
+  toast.show = true
+  toast.message = message
+  toast.type = type
 
   toastTimeout = setTimeout(() => {
-    toast.show = false;
-  }, 3500);
+    toast.show = false
+  }, 3500)
 }
 
 function resetForm() {
-  Object.assign(form, { ...defaultForm });
-  editingPlayer.value = null;
+  Object.assign(form, {
+    ...defaultForm
+  })
+
+  editingPlayer.value = null
 }
 
 function startEdit(player) {
-  editingPlayer.value = player;
+  editingPlayer.value = player
 
   Object.assign(form, {
     teamId: player.teamId || "",
@@ -378,28 +571,49 @@ function startEdit(player) {
     number: player.number || null,
     position: player.position || "",
     club: player.club || "",
-  });
+    goals: player.goals ?? 0
+  })
 
   window.scrollTo({
     top: 0,
-    behavior: "smooth",
-  });
+    behavior: "smooth"
+  })
 }
 
 function cancelEdit() {
-  resetForm();
+  resetForm()
 }
 
 async function handleSubmit() {
-  const number = Number(form.number);
+  const number = Number(form.number)
+  const goals = Number(form.goals)
 
-  if (!Number.isInteger(number) || number < 1 || number > 99) {
-    showToast("El número de camiseta debe estar entre 1 y 99.", "error");
+  if (
+    !Number.isInteger(number) ||
+    number < 1 ||
+    number > 99
+  ) {
+    showToast(
+      "El número de camiseta debe estar entre 1 y 99.",
+      "error"
+    )
 
-    return;
+    return
   }
 
-  submitting.value = true;
+  if (
+    !Number.isInteger(goals) ||
+    goals < 0
+  ) {
+    showToast(
+      "La cantidad de goles debe ser un número entero mayor o igual a 0.",
+      "error"
+    )
+
+    return
+  }
+
+  submitting.value = true
 
   try {
     const data = {
@@ -408,66 +622,113 @@ async function handleSubmit() {
       number,
       position: form.position,
       club: form.club.trim(),
-    };
-
-    if (editingPlayer.value) {
-      await updatePlayer(editingPlayer.value.id, data);
-      showToast(`${data.name} actualizado correctamente`);
-    } else {
-      await createPlayer(data);
-      showToast(`${data.name} creado correctamente`);
+      goals
     }
 
-    resetForm();
-  } catch (e) {
+    if (editingPlayer.value) {
+      await updatePlayer(
+        editingPlayer.value.id,
+        data
+      )
+
+      showToast(
+        `${data.name} actualizado correctamente`
+      )
+    } else {
+      await createPlayer(data)
+
+      showToast(
+        `${data.name} creado correctamente`
+      )
+    }
+
+    resetForm()
+  } catch (error) {
+    console.error(
+      "[players/manage] handleSubmit:",
+      error
+    )
+
     showToast(
-      playersError.value || "Ocurrió un error con el jugador.",
-      "error",
-    );
+      playersError.value ||
+        "Ocurrió un error con el jugador.",
+      "error"
+    )
   } finally {
-    submitting.value = false;
+    submitting.value = false
   }
 }
 
 function confirmDelete(player) {
-  playerToDelete.value = player;
+  playerToDelete.value = player
 }
 
 async function executeDelete() {
   if (!playerToDelete.value?.id) {
-    return;
+    return
   }
 
-  deleting.value = true;
+  deleting.value = true
 
-  const playerId = playerToDelete.value.id;
-  const playerName = playerToDelete.value.name;
-  const wasEditing = editingPlayer.value?.id === playerId;
+  const playerId =
+    playerToDelete.value.id
+
+  const playerName =
+    playerToDelete.value.name
+
+  const wasEditing =
+    editingPlayer.value?.id === playerId
 
   try {
-    await deletePlayer(playerId);
+    await deletePlayer(playerId)
 
-    playerToDelete.value = null;
+    playerToDelete.value = null
 
     if (wasEditing) {
-      resetForm();
+      resetForm()
     }
 
-    showToast(`${playerName} eliminado correctamente`);
-  } catch (e) {
-    showToast(playersError.value || "No se pudo eliminar el jugador.", "error");
+    showToast(
+      `${playerName} eliminado correctamente`
+    )
+  } catch (error) {
+    console.error(
+      "[players/manage] executeDelete:",
+      error
+    )
+
+    showToast(
+      playersError.value ||
+        "No se pudo eliminar el jugador.",
+      "error"
+    )
   } finally {
-    deleting.value = false;
+    deleting.value = false
   }
 }
 
+async function refetchData() {
+  await Promise.all([
+    fetchPlayers(),
+    fetchTeams()
+  ])
+}
+
 onMounted(async () => {
-  await Promise.all([fetchPlayers(), fetchTeams()]);
-});
+  await refetchData()
+})
+
+onBeforeUnmount(() => {
+  if (toastTimeout) {
+    clearTimeout(toastTimeout)
+  }
+})
 </script>
 
 <style scoped>
-.page-layout {
+.page-layout,
+.modal-overlay,
+.toast {
   --black: #0b0d0c;
   --lime: #9dca53;
   --lime-dark: #729c34;
@@ -478,11 +739,17 @@ onMounted(async () => {
   --gray: #747c74;
   --text: #171a17;
   --danger: #b93838;
+}
 
+.page-layout {
   display: flex;
   min-height: 100dvh;
   flex-direction: column;
-  font-family: Inter, Arial, Helvetica, sans-serif;
+  font-family:
+    Inter,
+    Arial,
+    Helvetica,
+    sans-serif;
   color: var(--text);
   background:
     radial-gradient(
@@ -496,27 +763,28 @@ onMounted(async () => {
 .manage-page {
   box-sizing: border-box;
   width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 28px 24px;
   flex: 1;
-}
-
-.manage-page *,
-.manage-page *::before,
-.manage-page *::after {
-  box-sizing: border-box;
+  padding:
+    64px
+    max(
+      24px,
+      calc((100% - 1100px) / 2)
+    );
 }
 
 .header-section {
   max-width: 730px;
-  margin: 0 auto 28px;
+  margin: 0 auto 40px;
   text-align: center;
 }
 
 .title {
   margin: 0 0 10px;
-  font-size: clamp(36px, 5vw, 52px);
+  font-size: clamp(
+    36px,
+    5vw,
+    52px
+  );
   letter-spacing: -2px;
 }
 
@@ -530,7 +798,9 @@ onMounted(async () => {
   border: 1px solid var(--border);
   border-radius: 18px;
   background: var(--white);
-  box-shadow: 0 12px 34px rgba(20, 25, 20, 0.07);
+  box-shadow:
+    0 12px 34px
+    rgba(20, 25, 20, 0.07);
 }
 
 .btn {
@@ -545,6 +815,7 @@ onMounted(async () => {
   cursor: pointer;
   border: 0;
   border-radius: 12px;
+  text-decoration: none;
   transition:
     transform 180ms ease,
     background 180ms ease;
@@ -587,12 +858,12 @@ onMounted(async () => {
 
 .form-section {
   padding: 30px;
-  margin-bottom: 32px;
+  margin-bottom: 48px;
 }
 
 .form-title {
   display: flex;
-  margin: 0 0 22px;
+  margin: 0 0 28px;
   align-items: center;
   gap: 11px;
   font-size: 23px;
@@ -600,9 +871,13 @@ onMounted(async () => {
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
   gap: 22px;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
 }
 
 .form-group {
@@ -621,8 +896,8 @@ onMounted(async () => {
 }
 
 .form-input {
+  box-sizing: border-box;
   width: 100%;
-  min-width: 0;
   min-height: 48px;
   padding: 12px 14px;
   font-size: 14px;
@@ -635,7 +910,9 @@ onMounted(async () => {
 
 .form-input:focus {
   border-color: var(--lime);
-  box-shadow: 0 0 0 4px rgba(157, 202, 83, 0.16);
+  box-shadow:
+    0 0 0 4px
+    rgba(157, 202, 83, 0.16);
 }
 
 .field-hint {
@@ -646,15 +923,16 @@ onMounted(async () => {
 
 .form-actions {
   display: flex;
-  padding-top: 16px;
+  padding-top: 22px;
   justify-content: flex-end;
   gap: 12px;
-  border-top: 1px solid var(--border);
+  border-top:
+    1px solid var(--border);
 }
 
 .section-title {
   display: flex;
-  margin: 0 0 16px;
+  margin: 0 0 22px;
   align-items: center;
   gap: 12px;
   font-size: 27px;
@@ -691,7 +969,9 @@ onMounted(async () => {
 
 .player-row--editing {
   border-color: var(--lime);
-  box-shadow: 0 0 0 4px rgba(157, 202, 83, 0.14);
+  box-shadow:
+    0 0 0 4px
+    rgba(157, 202, 83, 0.14);
 }
 
 .player-row-main {
@@ -757,6 +1037,12 @@ onMounted(async () => {
   background: #eef3ec;
 }
 
+.meta-badge--goals {
+  color: #664b08;
+  border-color: #ead691;
+  background: #fff5ce;
+}
+
 .player-row-actions {
   display: flex;
   margin-left: 16px;
@@ -773,10 +1059,6 @@ onMounted(async () => {
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--white);
-  transition:
-    transform 180ms ease,
-    border-color 180ms ease,
-    background 180ms ease;
 }
 
 .action-btn--edit:hover {
@@ -802,6 +1084,10 @@ onMounted(async () => {
   color: var(--danger);
 }
 
+.error-state .btn {
+  margin-top: 12px;
+}
+
 .empty-icon {
   margin-bottom: 15px;
   font-size: 44px;
@@ -824,7 +1110,8 @@ onMounted(async () => {
 .btn-spinner {
   border-style: solid;
   border-radius: 50%;
-  animation: spin 700ms linear infinite;
+  animation:
+    spin 700ms linear infinite;
 }
 
 .spinner {
@@ -833,15 +1120,18 @@ onMounted(async () => {
   margin-bottom: 16px;
   border-width: 4px;
   border-color: #dfe3dc;
-  border-top-color: var(--lime-dark);
+  border-top-color:
+    var(--lime-dark);
 }
 
 .btn-spinner {
   width: 16px;
   height: 16px;
   border-width: 2px;
-  border-color: rgba(255, 255, 255, 0.45);
-  border-top-color: var(--white);
+  border-color:
+    rgba(255, 255, 255, 0.45);
+  border-top-color:
+    var(--white);
 }
 
 .modal-overlay {
@@ -851,7 +1141,8 @@ onMounted(async () => {
   display: grid;
   padding: 24px;
   place-items: center;
-  background: rgba(11, 13, 12, 0.65);
+  background:
+    rgba(11, 13, 12, 0.65);
   backdrop-filter: blur(4px);
 }
 
@@ -896,7 +1187,9 @@ onMounted(async () => {
   font-weight: 700;
   color: var(--white);
   border-radius: 12px;
-  box-shadow: 0 12px 34px rgba(20, 25, 20, 0.22);
+  box-shadow:
+    0 12px 34px
+    rgba(20, 25, 20, 0.22);
 }
 
 .toast--success {
@@ -927,20 +1220,14 @@ onMounted(async () => {
     transform: rotate(360deg);
   }
 }
-.page-layout :deep(footer) {
-  width: 100%;
-  margin-top: 0;
-  flex-shrink: 0;
-}
 
 @media (max-width: 650px) {
   .manage-page {
-    padding: 26px 14px;
+    padding: 40px 14px;
   }
 
   .title {
     font-size: 35px;
-    letter-spacing: -1px;
   }
 
   .form-section {

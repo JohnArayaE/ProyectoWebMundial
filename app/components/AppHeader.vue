@@ -374,6 +374,18 @@ const navigationItems:
       matchPaths: ["/predictions"]
     },
     {
+      label: "Dashboard",
+      to: "/dashboard",
+      icon: "▣",
+      matchPaths: ["/dashboard"]
+    },
+    {
+      label: "Estadísticas",
+      to: "/statistics",
+      icon: "▥",
+      matchPaths: ["/statistics"]
+    },
+    {
       label: "Posiciones",
       to: "/standings",
       icon: "▦",

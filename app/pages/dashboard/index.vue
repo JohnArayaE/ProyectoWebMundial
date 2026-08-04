@@ -3,6 +3,7 @@
     <AppHeader
       :loading="loadingAuth"
       @logout="logout"
+       
     />
 
     <main class="dashboard-page">

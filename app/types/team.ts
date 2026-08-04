@@ -15,4 +15,6 @@ export interface Player {
   number: number
   position: string
   club: string
+  goals: number
+
 }
