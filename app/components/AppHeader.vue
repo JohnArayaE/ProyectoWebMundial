@@ -368,6 +368,12 @@ const navigationItems:
       matchPaths: ["/matches"]
     },
     {
+      label: "Predicciones",
+      to: "/predictions",
+      icon: "♛",
+      matchPaths: ["/predictions"]
+    },
+    {
       label: "Posiciones",
       to: "/standings",
       icon: "▦",

@@ -329,6 +329,15 @@
                 <span>!</span>
                 <p>{{ standingsSyncError }}</p>
               </div>
+              
+              <div
+                v-if="predictionSyncError"
+                class="message warning-message"
+                role="alert"
+              >
+                <span>!</span>
+                <p>{{ predictionSyncError }}</p>
+              </div>
 
               <div
                 v-if="successMessage"
@@ -519,6 +528,7 @@ import { Timestamp } from "firebase/firestore"
 import { useAuth } from "../../composables/useAuth"
 import { useTeams } from "../../composables/useTeams"
 import { useStandings } from "../../composables/useStandings"
+import { usePredictionScoring } from "../../composables/usePredictionScoring"
 
 import {
   useMatches,
@@ -574,6 +584,10 @@ const {
 const {
   recalculateGroupStandings
 } = useStandings()
+
+const {
+  evaluateMatchPredictions
+} = usePredictionScoring()
 
 const stages: MatchStage[] = [
   "Fase de grupos",
@@ -642,6 +656,7 @@ const saving = ref(false)
 const formError = ref("")
 const successMessage = ref("")
 const standingsSyncError = ref("")
+const predictionSyncError = ref("")
 
 const requiresGroupSelection = computed<boolean>(() => {
   return (
@@ -1014,12 +1029,38 @@ const resetForm = (): void => {
 
   formError.value = ""
   standingsSyncError.value = ""
+  predictionSyncError.value = ""
   successMessage.value = ""
+}
+
+/**
+ * Calcula o corrige los puntos obtenidos
+ * por las predicciones del partido guardado.
+ */
+const evaluateSavedMatchPredictions = async (
+  match: Match
+): Promise<boolean> => {
+  try {
+    await evaluateMatchPredictions(match)
+
+    return true
+  } catch (caughtError) {
+    predictionSyncError.value =
+      "El partido fue guardado, pero no se pudieron actualizar automáticamente los puntos de las predicciones."
+
+    console.error(
+      "[manage matches] evaluateSavedMatchPredictions:",
+      caughtError
+    )
+
+    return false
+  }
 }
 
 const saveMatch = async (): Promise<void> => {
   successMessage.value = ""
   standingsSyncError.value = ""
+  predictionSyncError.value = ""
 
   if (!validateForm()) {
     return
@@ -1032,6 +1073,12 @@ const saveMatch = async (): Promise<void> => {
     const affectedGroups: string[] = []
 
     if (editingId.value) {
+      /*
+       * Se conserva el ID en una constante porque
+       * editingId puede cambiar después de guardar.
+       */
+      const matchId = editingId.value
+
       /**
        * Guarda el grupo anterior.
        *
@@ -1052,9 +1099,23 @@ const saveMatch = async (): Promise<void> => {
       }
 
       await updateMatch(
-        editingId.value,
+        matchId,
         matchData
       )
+
+      /*
+       * Construye el partido actualizado con su ID
+       * para calcular los puntos de las predicciones.
+       */
+      const updatedMatch: Match = {
+        id: matchId,
+        ...matchData
+      }
+
+      const predictionPointsUpdated =
+        await evaluateSavedMatchPredictions(
+          updatedMatch
+        )
 
       const newGroup =
         getStandingGroup(matchData)
@@ -1070,10 +1131,22 @@ const saveMatch = async (): Promise<void> => {
           affectedGroups
         )
 
-      successMessage.value =
-        standingsUpdated
-          ? "El partido y la tabla de posiciones fueron actualizados correctamente."
-          : "El partido fue actualizado correctamente."
+      if (
+        standingsUpdated &&
+        predictionPointsUpdated
+      ) {
+        successMessage.value =
+          "El partido, la tabla de posiciones y los puntos de las predicciones fueron actualizados correctamente."
+      } else if (standingsUpdated) {
+        successMessage.value =
+          "El partido y la tabla de posiciones fueron actualizados correctamente."
+      } else if (predictionPointsUpdated) {
+        successMessage.value =
+          "El partido y los puntos de las predicciones fueron actualizados correctamente."
+      } else {
+        successMessage.value =
+          "El partido fue actualizado correctamente."
+      }
     } else {
       await createMatch(matchData)
 
@@ -1161,6 +1234,7 @@ const startEditing = (
 
   formError.value = ""
   standingsSyncError.value = ""
+  predictionSyncError.value = ""
   successMessage.value = ""
 
   window.scrollTo({
@@ -1183,6 +1257,7 @@ const removeMatch = async (
   successMessage.value = ""
   formError.value = ""
   standingsSyncError.value = ""
+  predictionSyncError.value = ""
 
   try {
     saving.value = true
@@ -1318,454 +1393,3 @@ onMounted(async () => {
   ])
 })
 </script>
-
-<style scoped>
-.page-wrapper {
-  display: flex;
-  min-height: 100vh;
-  flex-direction: column;
-  background: #eef1ec;
-}
-
-.manage-page {
-  --black: #0b0d0c;
-  --lime: #9dca53;
-  --lime-dark: #729c34;
-  --lime-soft: #edf6df;
-  --white: #ffffff;
-  --border: #dce1d9;
-  --gray: #747c74;
-  --text: #171a17;
-
-  flex: 1;
-  color: var(--text);
-  background:
-    radial-gradient(
-      circle at 10% 10%,
-      rgba(157, 202, 83, 0.11),
-      transparent 25%
-    ),
-    #eef1ec;
-}
-
-.main-content {
-  width: min(1250px, calc(100% - 48px));
-  margin: 0 auto;
-  padding: 45px 0 70px;
-}
-
-.back-link {
-  display: inline-flex;
-  margin-bottom: 30px;
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--lime-dark);
-  text-decoration: none;
-}
-
-.page-header {
-  margin-bottom: 35px;
-}
-
-.page-label,
-.card-label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 10px;
-  font-weight: 900;
-  color: var(--lime-dark);
-  text-transform: uppercase;
-  letter-spacing: 1.4px;
-}
-
-.page-header h1 {
-  margin: 0 0 12px;
-  font-size: clamp(38px, 5vw, 54px);
-  letter-spacing: -2px;
-}
-
-.page-header p {
-  max-width: 650px;
-  margin: 0;
-  color: var(--gray);
-}
-
-.manage-grid {
-  display: grid;
-  grid-template-columns:
-    minmax(0, 1fr)
-    minmax(350px, 0.8fr);
-  gap: 24px;
-  align-items: start;
-}
-
-.form-card,
-.matches-card {
-  padding: 30px;
-  border: 1px solid var(--border);
-  border-radius: 22px;
-  background: var(--white);
-  box-shadow: 0 14px 38px rgba(20, 25, 20, 0.07);
-}
-
-.card-header {
-  display: flex;
-  gap: 18px;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 22px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--border);
-}
-
-.card-header h2 {
-  margin: 0;
-  font-size: 22px;
-}
-
-.card-icon {
-  display: grid;
-  width: 47px;
-  height: 47px;
-  place-items: center;
-  border-radius: 14px;
-  background: var(--lime-soft);
-}
-
-.match-form {
-  display: grid;
-  gap: 21px;
-}
-
-.two-columns {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
-}
-
-.form-group {
-  display: grid;
-  gap: 8px;
-}
-
-.form-group label {
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.form-group input,
-.form-group select {
-  width: 100%;
-  min-height: 48px;
-  padding: 11px 13px;
-  font: inherit;
-  font-size: 13px;
-  border: 1px solid #d5dbd2;
-  border-radius: 11px;
-  background: var(--white);
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  border-color: var(--lime-dark);
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(157, 202, 83, 0.18);
-}
-
-.form-group input:disabled,
-.form-group select:disabled {
-  cursor: not-allowed;
-  background: #f1f3ef;
-}
-
-.message {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 13px;
-  border-radius: 11px;
-}
-
-.message span {
-  display: grid;
-  width: 22px;
-  height: 22px;
-  flex: 0 0 auto;
-  font-size: 11px;
-  font-weight: 900;
-  place-items: center;
-  border-radius: 50%;
-}
-
-.message p {
-  margin: 0;
-  font-size: 12px;
-}
-
-.error-message {
-  color: #842e2e;
-  border: 1px solid #efc4c4;
-  background: #fff1f1;
-}
-
-.error-message span {
-  color: white;
-  background: #b83a3a;
-}
-
-.warning-message {
-  color: #745b16;
-  border: 1px solid #ead28a;
-  background: #fff8df;
-}
-
-.warning-message span {
-  color: white;
-  background: #b28b26;
-}
-
-.success-message {
-  color: #476325;
-  border: 1px solid #cee2ad;
-  background: #f0f7e5;
-}
-
-.success-message span {
-  background: var(--lime);
-}
-
-.form-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-.form-actions button {
-  min-height: 45px;
-  padding: 10px 18px;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  border-radius: 11px;
-}
-
-.cancel-button {
-  border: 1px solid var(--border);
-  background: white;
-}
-
-.save-button {
-  color: var(--black);
-  border: 1px solid var(--lime);
-  background: var(--lime);
-}
-
-.save-button:hover:not(:disabled) {
-  color: white;
-  border-color: var(--black);
-  background: var(--black);
-}
-
-.form-actions button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.refresh-button {
-  padding: 9px 12px;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 800;
-  cursor: pointer;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  background: #f4f5f3;
-}
-
-.matches-list {
-  display: grid;
-  gap: 14px;
-  max-height: 830px;
-  overflow-y: auto;
-}
-
-.match-item {
-  padding: 17px;
-  border: 1px solid #e0e5dd;
-  border-radius: 14px;
-  background: #f9faf8;
-}
-
-.match-item-header {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.match-item-header > div {
-  display: grid;
-  gap: 3px;
-}
-
-.match-item-header > div > span {
-  font-size: 11px;
-  font-weight: 900;
-  color: var(--lime-dark);
-  text-transform: uppercase;
-}
-
-.match-item-header small {
-  font-size: 10px;
-  color: var(--gray);
-}
-
-.status {
-  padding: 6px 9px;
-  font-size: 9px;
-  font-weight: 900;
-  border-radius: 999px;
-}
-
-.scheduled-status {
-  color: #596154;
-  background: #e9ece6;
-}
-
-.live-status {
-  color: #8b2929;
-  background: #ffe3e3;
-}
-
-.finished-status {
-  color: #496524;
-  background: var(--lime-soft);
-}
-
-.match-teams {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 9px;
-  align-items: center;
-  padding: 18px 0 12px;
-  text-align: center;
-}
-
-.match-teams strong {
-  font-size: 13px;
-  overflow-wrap: anywhere;
-}
-
-.match-teams span {
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.match-location,
-.match-date {
-  margin: 4px 0;
-  font-size: 10px;
-  color: var(--gray);
-  text-align: center;
-}
-
-.item-actions {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 9px;
-  margin-top: 15px;
-}
-
-.item-actions button {
-  min-height: 38px;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 800;
-  cursor: pointer;
-  border-radius: 9px;
-}
-
-.edit-button {
-  border: 1px solid var(--lime);
-  background: var(--lime-soft);
-}
-
-.delete-button {
-  color: #922f2f;
-  border: 1px solid #efc5c5;
-  background: #fff0f0;
-}
-
-.state-box {
-  display: grid;
-  min-height: 230px;
-  text-align: center;
-  place-content: center;
-}
-
-.state-box strong {
-  margin-bottom: 7px;
-}
-
-.state-box p {
-  max-width: 280px;
-  margin: 0;
-  font-size: 12px;
-  color: var(--gray);
-}
-
-.spinner {
-  width: 38px;
-  height: 38px;
-  margin: 0 auto 15px;
-  border: 4px solid #dfe3dc;
-  border-top-color: var(--lime-dark);
-  border-radius: 50%;
-  animation: spin 700ms linear infinite;
-}
-
-.empty-icon {
-  margin-bottom: 13px;
-  font-size: 30px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (max-width: 950px) {
-  .manage-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .matches-list {
-    max-height: none;
-  }
-}
-
-@media (max-width: 600px) {
-  .main-content {
-    width: min(100% - 28px, 1250px);
-  }
-
-  .two-columns {
-    grid-template-columns: 1fr;
-  }
-
-  .form-card,
-  .matches-card {
-    padding: 21px;
-  }
-
-  .form-actions {
-    display: grid;
-  }
-
-  .form-actions button {
-    width: 100%;
-  }
-}
-</style>

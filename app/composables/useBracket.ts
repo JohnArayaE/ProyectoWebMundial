@@ -12,6 +12,10 @@ import {
   type QualifiedTeam
 } from "./useStandings"
 
+import {
+  usePredictionScoring
+} from "./usePredictionScoring"
+
 import type {
   Match,
   MatchStage
@@ -134,6 +138,10 @@ export function useBracket() {
     qualificationSummary,
     sortStandings
   } = useStandings()
+
+  const {
+    evaluateMatchPredictions
+  } = usePredictionScoring()
 
   const bracketMatches =
     useState<BracketMatch[]>(
@@ -1106,6 +1114,28 @@ export function useBracket() {
     )
   }
 
+  /**
+   * Actualiza los puntos de las predicciones
+   * sin interrumpir el funcionamiento del bracket.
+   */
+  async function syncBracketPredictionPoints(
+    match: BracketMatch
+  ): Promise<void> {
+    try {
+      await evaluateMatchPredictions(
+        match
+      )
+    } catch (caughtError) {
+      error.value =
+        "El resultado se guardó, pero no se pudieron actualizar los puntos de las predicciones."
+
+      console.error(
+        "[useBracket] syncBracketPredictionPoints:",
+        caughtError
+      )
+    }
+  }
+
   async function saveBracketResult(
     matchId: string,
     result: BracketResultInput
@@ -1214,6 +1244,43 @@ export function useBracket() {
       )
 
       await fetchBracketMatches()
+
+      const savedMatch: BracketMatch = {
+        ...match,
+
+        homeScore:
+          validateScore(
+            result.homeScore,
+            "El marcador local"
+          ),
+
+        awayScore:
+          validateScore(
+            result.awayScore,
+            "El marcador visitante"
+          ),
+
+        homePenaltyScore,
+        awayPenaltyScore,
+
+        winnerTeamId:
+          winner.teamId,
+
+        winnerTeam:
+          winner.teamName,
+
+        loserTeamId:
+          loser.teamId,
+
+        loserTeam:
+          loser.teamName,
+
+        status: "Finalizado"
+      }
+
+      await syncBracketPredictionPoints(
+        savedMatch
+      )
     } catch (caughtError) {
       error.value =
         caughtError instanceof Error
@@ -1355,6 +1422,28 @@ export function useBracket() {
       )
 
       await fetchBracketMatches()
+
+      const clearedMatch: BracketMatch = {
+        ...match,
+
+        homeScore: 0,
+        awayScore: 0,
+
+        homePenaltyScore: null,
+        awayPenaltyScore: null,
+
+        winnerTeamId: "",
+        winnerTeam: "",
+
+        loserTeamId: "",
+        loserTeam: "",
+
+        status: "Programado"
+      }
+
+      await syncBracketPredictionPoints(
+        clearedMatch
+      )
     } catch (caughtError) {
       error.value =
         caughtError instanceof Error

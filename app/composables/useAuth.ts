@@ -13,6 +13,7 @@ import {
 import {
   doc,
   getDoc,
+  onSnapshot,
   setDoc,
   serverTimestamp
 } from "firebase/firestore"
@@ -39,6 +40,12 @@ const loadingAuth = ref(false)
 const errorAuth = ref<string | null>(null)
 
 let authInitialized = false
+let unsubscribeUserProfile: (() => void) | null = null
+
+const stopUserProfileListener = (): void => {
+  unsubscribeUserProfile?.()
+  unsubscribeUserProfile = null
+}
 
 /**
  * Convierte los datos guardados en Firestore
@@ -113,6 +120,8 @@ export const useAuth = () => {
   const loadOrCreateUserProfile = async (
     user: User
   ): Promise<void> => {
+    stopUserProfileListener()
+
     const userReference = doc(
       db,
       "users",
@@ -134,6 +143,23 @@ export const useAuth = () => {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       })
+    } else if (
+      typeof userSnapshot.data().points !== "number"
+    ) {
+      /**
+       * Agrega points a perfiles creados antes de incorporar
+       * el sistema de puntuación, sin modificar otros datos.
+       */
+      await setDoc(
+        userReference,
+        {
+          points: 0,
+          updatedAt: serverTimestamp()
+        },
+        {
+          merge: true
+        }
+      )
     }
 
     const updatedSnapshot = await getDoc(
@@ -145,6 +171,30 @@ export const useAuth = () => {
         updatedSnapshot.data()
       )
     }
+
+    /**
+     * Mantiene el perfil sincronizado en tiempo real.
+     * Así, los puntos aparecen sin cerrar sesión ni recargar.
+     */
+    unsubscribeUserProfile = onSnapshot(
+      userReference,
+      snapshot => {
+        if (snapshot.exists()) {
+          currentUser.value = mapFirestoreUser(
+            snapshot.data()
+          )
+        }
+      },
+      error => {
+        console.error(
+          "[useAuth] user profile listener:",
+          error
+        )
+
+        errorAuth.value =
+          "No se pudo actualizar el perfil en tiempo real"
+      }
+    )
   }
 
   /**
@@ -171,6 +221,7 @@ export const useAuth = () => {
           if (user) {
             await loadOrCreateUserProfile(user)
           } else {
+            stopUserProfileListener()
             currentUser.value = null
           }
         } catch (error: unknown) {
@@ -300,6 +351,7 @@ export const useAuth = () => {
 
       await signOut(auth)
 
+      stopUserProfileListener()
       currentUser.value = null
 
       await router.push("/login")
