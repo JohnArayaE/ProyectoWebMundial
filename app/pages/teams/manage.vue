@@ -1,5 +1,8 @@
 <template>
-  <div class="manage-page">
+  <div class="page-layout">
+    <AppHeader />
+
+    <main class="manage-page">
     <!-- Header -->
     <div class="header-section">
       <h1 class="title text-gradient">Gestión de Equipos</h1>
@@ -209,6 +212,10 @@
         </div>
       </Transition>
     </Teleport>
+
+    </main>
+
+    <AppFooter />
   </div>
 </template>
 
@@ -334,7 +341,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.manage-page {
+.page-layout {
   --black: #0b0d0c;
   --lime: #9dca53;
   --lime-dark: #729c34;
@@ -346,8 +353,10 @@ onMounted(() => {
   --text: #171a17;
   --danger: #b93838;
 
-  min-height: 100vh;
-  padding: 64px max(24px, calc((100% - 1100px) / 2));
+  display: flex;
+  width: 100%;
+  min-height: 100dvh;
+  flex-direction: column;
   font-family: Inter, Arial, Helvetica, sans-serif;
   color: var(--text);
   background:
@@ -359,14 +368,31 @@ onMounted(() => {
     var(--background);
 }
 
+.manage-page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px 24px 14px;
+  flex: 1;
+}
+
+.manage-page *,
+.manage-page *::before,
+.manage-page *::after {
+  box-sizing: border-box;
+}
+
+/* Encabezado de la página */
+
 .header-section {
   max-width: 730px;
-  margin: 0 auto 40px;
+  margin: 0 auto 26px;
   text-align: center;
 }
 
 .title {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   font-size: clamp(36px, 5vw, 52px);
   letter-spacing: -2px;
 }
@@ -378,22 +404,26 @@ onMounted(() => {
 }
 
 .subtitle {
-  margin: 0 0 22px;
+  margin: 0 0 16px;
   font-size: 15px;
   color: var(--gray);
 }
 
+/* Contenedores */
+
 .glass {
-  border: 1px solid #dce1d9;
+  border: 1px solid var(--border);
   border-radius: 18px;
-  background: #ffffff;
+  background: var(--white);
   box-shadow: 0 12px 34px rgba(20, 25, 20, 0.07);
 }
 
+/* Botones */
+
 .btn {
   display: inline-flex;
-  min-height: 45px;
-  padding: 11px 21px;
+  min-height: 43px;
+  padding: 10px 20px;
   align-items: center;
   justify-content: center;
   gap: 8px;
@@ -419,8 +449,8 @@ onMounted(() => {
 }
 
 .btn-secondary {
-  color: #ffffff;
-  background: #0b0d0c;
+  color: var(--white);
+  background: var(--black);
 }
 
 .btn-secondary:hover {
@@ -429,8 +459,8 @@ onMounted(() => {
 }
 
 .btn-danger {
-  color: #ffffff;
-  background: #b93838;
+  color: var(--white);
+  background: var(--danger);
 }
 
 .btn-danger:hover {
@@ -447,14 +477,16 @@ onMounted(() => {
   gap: 8px;
 }
 
+/* Formulario */
+
 .form-section {
-  padding: 30px;
-  margin-bottom: 48px;
+  padding: 24px 30px;
+  margin-bottom: 28px;
 }
 
 .form-title {
   display: flex;
-  margin: 0 0 28px;
+  margin: 0 0 20px;
   align-items: center;
   gap: 11px;
   font-size: 23px;
@@ -463,14 +495,14 @@ onMounted(() => {
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 22px;
-  margin-bottom: 30px;
+  gap: 14px 22px;
+  margin-bottom: 20px;
 }
 
 .form-group {
   display: grid;
   position: relative;
-  gap: 8px;
+  gap: 6px;
 }
 
 .form-label {
@@ -481,8 +513,8 @@ onMounted(() => {
 
 .form-input {
   width: 100%;
-  min-height: 48px;
-  padding: 12px 14px;
+  min-height: 43px;
+  padding: 9px 14px;
   font-size: 14px;
   color: var(--text);
   border: 1px solid var(--border);
@@ -511,22 +543,24 @@ onMounted(() => {
 .flag-preview {
   position: absolute;
   right: 16px;
-  bottom: 9px;
+  bottom: 6px;
   font-size: 25px;
   pointer-events: none;
 }
 
 .form-actions {
   display: flex;
-  padding-top: 22px;
+  padding-top: 16px;
   justify-content: flex-end;
   gap: 12px;
   border-top: 1px solid var(--border);
 }
 
+/* Lista de equipos */
+
 .section-title {
   display: flex;
-  margin: 0 0 22px;
+  margin: 0 0 14px;
   align-items: center;
   gap: 12px;
   font-size: 27px;
@@ -543,12 +577,12 @@ onMounted(() => {
 
 .teams-list {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .team-row {
   display: flex;
-  padding: 17px 21px;
+  padding: 12px 18px;
   align-items: center;
   justify-content: space-between;
   transition:
@@ -576,11 +610,11 @@ onMounted(() => {
 
 .team-row-flag {
   display: grid;
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
   place-items: center;
-  font-size: 26px;
+  font-size: 25px;
   border: 1px solid #e4e8e1;
   border-radius: 14px;
   background: #f6f7f5;
@@ -592,7 +626,7 @@ onMounted(() => {
 }
 
 .team-row-name {
-  margin: 0 0 7px;
+  margin: 0 0 6px;
   overflow: hidden;
   font-size: 17px;
   white-space: nowrap;
@@ -637,8 +671,8 @@ onMounted(() => {
 
 .action-btn {
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   cursor: pointer;
   place-items: center;
   border: 1px solid var(--border);
@@ -662,15 +696,17 @@ onMounted(() => {
   transform: scale(1.07);
 }
 
+/* Estado vacío y carga */
+
 .empty-state {
-  padding: 60px 25px;
+  padding: 45px 25px;
   text-align: center;
   color: var(--gray);
 }
 
 .empty-icon {
-  margin-bottom: 15px;
-  font-size: 44px;
+  margin-bottom: 12px;
+  font-size: 42px;
 }
 
 .empty-hint {
@@ -680,7 +716,7 @@ onMounted(() => {
 
 .loader-container {
   display: flex;
-  padding: 60px 0;
+  padding: 45px 0;
   flex-direction: column;
   align-items: center;
   color: var(--gray);
@@ -707,8 +743,10 @@ onMounted(() => {
   height: 16px;
   border-width: 2px;
   border-color: rgba(255, 255, 255, 0.45);
-  border-top-color: #ffffff;
+  border-top-color: var(--white);
 }
+
+/* Modal */
 
 .modal-overlay {
   position: fixed;
@@ -735,13 +773,13 @@ onMounted(() => {
 .modal-title {
   margin: 0 0 12px;
   font-size: 23px;
-  color: #171a17;
+  color: var(--text);
 }
 
 .modal-text {
   margin: 0 0 26px;
   line-height: 1.6;
-  color: #747c74;
+  color: var(--gray);
 }
 
 .modal-actions {
@@ -749,6 +787,8 @@ onMounted(() => {
   justify-content: center;
   gap: 12px;
 }
+
+/* Notificación */
 
 .toast {
   position: fixed;
@@ -761,18 +801,20 @@ onMounted(() => {
   gap: 9px;
   font-size: 13px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--white);
   border-radius: 12px;
   box-shadow: 0 12px 34px rgba(20, 25, 20, 0.22);
 }
 
 .toast--success {
-  background: #729c34;
+  background: var(--lime-dark);
 }
 
 .toast--error {
-  background: #b93838;
+  background: var(--danger);
 }
+
+/* Transiciones */
 
 .modal-enter-active,
 .modal-leave-active,
@@ -795,21 +837,47 @@ onMounted(() => {
   }
 }
 
+/* Footer */
+
+.page-layout :deep(footer) {
+  width: 100%;
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+/* Teléfonos */
+
 @media (max-width: 650px) {
   .manage-page {
-    padding: 40px 14px;
+    padding: 18px 14px 12px;
+  }
+
+  .header-section {
+    margin-bottom: 22px;
   }
 
   .title {
     font-size: 35px;
   }
 
+  .subtitle {
+    margin-bottom: 14px;
+  }
+
   .form-section {
-    padding: 22px 17px;
+    padding: 20px 17px;
+    margin-bottom: 24px;
+  }
+
+  .form-title {
+    margin-bottom: 18px;
+    font-size: 21px;
   }
 
   .form-grid {
     grid-template-columns: 1fr;
+    gap: 14px;
+    margin-bottom: 18px;
   }
 
   .form-actions,
@@ -822,10 +890,15 @@ onMounted(() => {
     width: 100%;
   }
 
+  .section-title {
+    font-size: 23px;
+  }
+
   .team-row {
+    padding: 14px;
     align-items: flex-start;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
   }
 
   .team-row-actions {

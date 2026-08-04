@@ -1,314 +1,293 @@
 <template>
-  <div class="manage-page">
-    <!-- Encabezado -->
-    <div class="header-section">
-      <h1 class="title">Gestión de Jugadores</h1>
-      <p class="subtitle">
-        Crear, editar y eliminar jugadores del Mundial 2026
-      </p>
+  <div class="page-layout">
+    <AppHeader />
 
-      <NuxtLink to="/players" class="btn btn-secondary back-link">
-        <span>&larr;</span>
-        Ver lista de jugadores
-      </NuxtLink>
-    </div>
-
-    <!-- Formulario -->
-    <div class="form-section glass">
-      <h2 class="form-title">
-        <span>{{ editingPlayer ? '✏️' : '➕' }}</span>
-        {{ editingPlayer ? 'Editar Jugador' : 'Nuevo Jugador' }}
-      </h2>
-
-      <form class="player-form" @submit.prevent="handleSubmit">
-        <div class="form-grid">
-          <!-- Nombre -->
-          <div class="form-group">
-            <label for="name" class="form-label">
-              Nombre del jugador
-            </label>
-
-            <input
-              id="name"
-              v-model="form.name"
-              type="text"
-              class="form-input"
-              placeholder="Ej: Lionel Messi"
-              required
-            />
-          </div>
-
-          <!-- Selección -->
-          <div class="form-group">
-            <label for="teamId" class="form-label">
-              Selección
-            </label>
-
-            <select
-              id="teamId"
-              v-model="form.teamId"
-              class="form-input"
-              required
-            >
-              <option value="" disabled>
-                Seleccionar equipo
-              </option>
-
-              <option
-                v-for="team in teams"
-                :key="team.id"
-                :value="team.id"
-              >
-                {{ team.flag || '🏳️' }} {{ team.name }}
-              </option>
-            </select>
-
-            <p v-if="!teamsLoading && teams.length === 0" class="field-hint">
-              Primero debes registrar al menos un equipo.
-            </p>
-          </div>
-
-          <!-- Número -->
-          <div class="form-group">
-            <label for="number" class="form-label">
-              Número de camiseta
-            </label>
-
-            <input
-              id="number"
-              v-model.number="form.number"
-              type="number"
-              class="form-input"
-              placeholder="Ej: 10"
-              min="1"
-              max="99"
-              required
-            />
-          </div>
-
-          <!-- Posición -->
-          <div class="form-group">
-            <label for="position" class="form-label">
-              Posición
-            </label>
-
-            <select
-              id="position"
-              v-model="form.position"
-              class="form-input"
-              required
-            >
-              <option value="" disabled>
-                Seleccionar posición
-              </option>
-
-              <option
-                v-for="position in positionOptions"
-                :key="position"
-                :value="position"
-              >
-                {{ position }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Club -->
-          <div class="form-group form-group--full">
-            <label for="club" class="form-label">
-              Club actual
-            </label>
-
-            <input
-              id="club"
-              v-model="form.club"
-              type="text"
-              class="form-input"
-              placeholder="Ej: Inter Miami"
-              required
-            />
-          </div>
-        </div>
-
-        <div class="form-actions">
-          <button
-            type="submit"
-            class="btn btn-primary"
-            :disabled="submitting || teams.length === 0"
-          >
-            <span v-if="submitting" class="btn-spinner"></span>
-
-            {{ editingPlayer ? 'Guardar Cambios' : 'Crear Jugador' }}
-          </button>
-
-          <button
-            v-if="editingPlayer"
-            type="button"
-            class="btn btn-secondary"
-            @click="cancelEdit"
-          >
-            Cancelar
-          </button>
-        </div>
-      </form>
-    </div>
-
-    <!-- Lista -->
-    <div class="list-section">
-      <h2 class="section-title">
-        Jugadores Registrados
-
-        <span class="player-count">
-          {{ players.length }}
-        </span>
-      </h2>
-
-      <div v-if="pageLoading" class="loader-container">
-        <div class="spinner"></div>
-        <p>Cargando jugadores...</p>
-      </div>
-
-      <div v-else-if="pageError" class="error-state glass">
-        <p>⚠️ {{ pageError }}</p>
-      </div>
-
-      <div v-else-if="players.length === 0" class="empty-state glass">
-        <div class="empty-icon">👕</div>
-        <p>No hay jugadores registrados todavía.</p>
-        <p class="empty-hint">
-          Usa el formulario de arriba para agregar el primero.
+    <main class="manage-page">
+      <!-- Encabezado -->
+      <div class="header-section">
+        <h1 class="title">Gestión de Jugadores</h1>
+        <p class="subtitle">
+          Crear, editar y eliminar jugadores del Mundial 2026
         </p>
+
+        <NuxtLink to="/players" class="btn btn-secondary back-link">
+          <span>&larr;</span>
+          Ver lista de jugadores
+        </NuxtLink>
       </div>
 
-      <div v-else class="players-list">
-        <div
-          v-for="player in players"
-          :key="player.id"
-          class="player-row glass"
-          :class="{
-            'player-row--editing': editingPlayer?.id === player.id
-          }"
-        >
-          <div class="player-row-main">
-            <div class="player-number">
-              {{ player.number }}
+      <!-- Formulario -->
+      <div class="form-section glass">
+        <h2 class="form-title">
+          <span>{{ editingPlayer ? "✏️" : "➕" }}</span>
+          {{ editingPlayer ? "Editar Jugador" : "Nuevo Jugador" }}
+        </h2>
+
+        <form class="player-form" @submit.prevent="handleSubmit">
+          <div class="form-grid">
+            <!-- Nombre -->
+            <div class="form-group">
+              <label for="name" class="form-label"> Nombre del jugador </label>
+
+              <input
+                id="name"
+                v-model="form.name"
+                type="text"
+                class="form-input"
+                placeholder="Ej: Lionel Messi"
+                required
+              />
             </div>
 
-            <div class="player-row-info">
-              <h3 class="player-row-name">
-                {{ player.name }}
-              </h3>
+            <!-- Selección -->
+            <div class="form-group">
+              <label for="teamId" class="form-label"> Selección </label>
 
-              <div class="player-row-meta">
-                <span class="meta-badge meta-badge--team">
-                  {{ getTeamName(player.teamId) }}
-                </span>
+              <select
+                id="teamId"
+                v-model="form.teamId"
+                class="form-input"
+                required
+              >
+                <option value="" disabled>Seleccionar equipo</option>
 
-                <span class="meta-badge">
-                  {{ player.position }}
-                </span>
+                <option v-for="team in teams" :key="team.id" :value="team.id">
+                  {{ team.flag || "🏳️" }} {{ team.name }}
+                </option>
+              </select>
 
-                <span class="meta-badge meta-badge--club">
-                  {{ player.club }}
-                </span>
+              <p v-if="!teamsLoading && teams.length === 0" class="field-hint">
+                Primero debes registrar al menos un equipo.
+              </p>
+            </div>
+
+            <!-- Número -->
+            <div class="form-group">
+              <label for="number" class="form-label">
+                Número de camiseta
+              </label>
+
+              <input
+                id="number"
+                v-model.number="form.number"
+                type="number"
+                class="form-input"
+                placeholder="Ej: 10"
+                min="1"
+                max="99"
+                required
+              />
+            </div>
+
+            <!-- Posición -->
+            <div class="form-group">
+              <label for="position" class="form-label"> Posición </label>
+
+              <select
+                id="position"
+                v-model="form.position"
+                class="form-input"
+                required
+              >
+                <option value="" disabled>Seleccionar posición</option>
+
+                <option
+                  v-for="position in positionOptions"
+                  :key="position"
+                  :value="position"
+                >
+                  {{ position }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Club -->
+            <div class="form-group form-group--full">
+              <label for="club" class="form-label"> Club actual </label>
+
+              <input
+                id="club"
+                v-model="form.club"
+                type="text"
+                class="form-input"
+                placeholder="Ej: Inter Miami"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button
+              type="submit"
+              class="btn btn-primary"
+              :disabled="submitting || teams.length === 0"
+            >
+              <span v-if="submitting" class="btn-spinner"></span>
+
+              {{ editingPlayer ? "Guardar Cambios" : "Crear Jugador" }}
+            </button>
+
+            <button
+              v-if="editingPlayer"
+              type="button"
+              class="btn btn-secondary"
+              @click="cancelEdit"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Lista -->
+      <div class="list-section">
+        <h2 class="section-title">
+          Jugadores Registrados
+
+          <span class="player-count">
+            {{ players.length }}
+          </span>
+        </h2>
+
+        <div v-if="pageLoading" class="loader-container">
+          <div class="spinner"></div>
+          <p>Cargando jugadores...</p>
+        </div>
+
+        <div v-else-if="pageError" class="error-state glass">
+          <p>⚠️ {{ pageError }}</p>
+        </div>
+
+        <div v-else-if="players.length === 0" class="empty-state glass">
+          <div class="empty-icon">👕</div>
+          <p>No hay jugadores registrados todavía.</p>
+          <p class="empty-hint">
+            Usa el formulario de arriba para agregar el primero.
+          </p>
+        </div>
+
+        <div v-else class="players-list">
+          <div
+            v-for="player in players"
+            :key="player.id"
+            class="player-row glass"
+            :class="{
+              'player-row--editing': editingPlayer?.id === player.id,
+            }"
+          >
+            <div class="player-row-main">
+              <div class="player-number">
+                {{ player.number }}
+              </div>
+
+              <div class="player-row-info">
+                <h3 class="player-row-name">
+                  {{ player.name }}
+                </h3>
+
+                <div class="player-row-meta">
+                  <span class="meta-badge meta-badge--team">
+                    {{ getTeamName(player.teamId) }}
+                  </span>
+
+                  <span class="meta-badge">
+                    {{ player.position }}
+                  </span>
+
+                  <span class="meta-badge meta-badge--club">
+                    {{ player.club }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="player-row-actions">
+              <button
+                type="button"
+                class="action-btn action-btn--edit"
+                title="Editar jugador"
+                @click="startEdit(player)"
+              >
+                ✏️
+              </button>
+
+              <button
+                type="button"
+                class="action-btn action-btn--delete"
+                title="Eliminar jugador"
+                @click="confirmDelete(player)"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de eliminación -->
+      <Teleport to="body">
+        <Transition name="modal">
+          <div
+            v-if="playerToDelete"
+            class="modal-overlay"
+            @click.self="playerToDelete = null"
+          >
+            <div class="modal glass">
+              <div class="modal-icon">⚠️</div>
+
+              <h3 class="modal-title">¿Eliminar jugador?</h3>
+
+              <p class="modal-text">
+                Estás a punto de eliminar a
+                <strong>{{ playerToDelete.name }}</strong
+                >. Esta acción no se puede deshacer.
+              </p>
+
+              <div class="modal-actions">
+                <button
+                  type="button"
+                  class="btn btn-danger"
+                  :disabled="deleting"
+                  @click="executeDelete"
+                >
+                  <span v-if="deleting" class="btn-spinner"></span>
+                  Sí, eliminar
+                </button>
+
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  :disabled="deleting"
+                  @click="playerToDelete = null"
+                >
+                  Cancelar
+                </button>
               </div>
             </div>
           </div>
+        </Transition>
+      </Teleport>
 
-          <div class="player-row-actions">
-            <button
-              type="button"
-              class="action-btn action-btn--edit"
-              title="Editar jugador"
-              @click="startEdit(player)"
-            >
-              ✏️
-            </button>
+      <!-- Notificación -->
+      <Teleport to="body">
+        <Transition name="toast">
+          <div v-if="toast.show" class="toast" :class="`toast--${toast.type}`">
+            <span>
+              {{ toast.type === "success" ? "✅" : "❌" }}
+            </span>
 
-            <button
-              type="button"
-              class="action-btn action-btn--delete"
-              title="Eliminar jugador"
-              @click="confirmDelete(player)"
-            >
-              🗑️
-            </button>
+            <span>{{ toast.message }}</span>
           </div>
-        </div>
-      </div>
-    </div>
+        </Transition>
+      </Teleport>
+    </main>
 
-    <!-- Modal de eliminación -->
-    <Teleport to="body">
-      <Transition name="modal">
-        <div
-          v-if="playerToDelete"
-          class="modal-overlay"
-          @click.self="playerToDelete = null"
-        >
-          <div class="modal glass">
-            <div class="modal-icon">⚠️</div>
-
-            <h3 class="modal-title">
-              ¿Eliminar jugador?
-            </h3>
-
-            <p class="modal-text">
-              Estás a punto de eliminar a
-              <strong>{{ playerToDelete.name }}</strong>.
-              Esta acción no se puede deshacer.
-            </p>
-
-            <div class="modal-actions">
-              <button
-                type="button"
-                class="btn btn-danger"
-                :disabled="deleting"
-                @click="executeDelete"
-              >
-                <span v-if="deleting" class="btn-spinner"></span>
-                Sí, eliminar
-              </button>
-
-              <button
-                type="button"
-                class="btn btn-secondary"
-                :disabled="deleting"
-                @click="playerToDelete = null"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
-
-    <!-- Notificación -->
-    <Teleport to="body">
-      <Transition name="toast">
-        <div
-          v-if="toast.show"
-          class="toast"
-          :class="`toast--${toast.type}`"
-        >
-          <span>
-            {{ toast.type === 'success' ? '✅' : '❌' }}
-          </span>
-
-          <span>{{ toast.message }}</span>
-        </div>
-      </Transition>
-    </Teleport>
+    <AppFooter />
   </div>
 </template>
 
 <script setup>
-import {
-  computed,
-  onMounted,
-  reactive,
-  ref
-} from 'vue'
+import { computed, onMounted, reactive, ref } from "vue";
 
 const {
   players,
@@ -317,121 +296,110 @@ const {
   fetchPlayers,
   createPlayer,
   updatePlayer,
-  deletePlayer
-} = usePlayers()
+  deletePlayer,
+} = usePlayers();
 
 const {
   teams,
   loading: teamsLoading,
   error: teamsError,
-  fetchTeams
-} = useTeams()
+  fetchTeams,
+} = useTeams();
 
-const positionOptions = [
-  'Portero',
-  'Defensa',
-  'Mediocampista',
-  'Delantero'
-]
+const positionOptions = ["Portero", "Defensa", "Mediocampista", "Delantero"];
 
 const defaultForm = {
-  teamId: '',
-  name: '',
+  teamId: "",
+  name: "",
   number: null,
-  position: '',
-  club: ''
-}
+  position: "",
+  club: "",
+};
 
-const form = reactive({ ...defaultForm })
+const form = reactive({ ...defaultForm });
 
-const editingPlayer = ref(null)
-const playerToDelete = ref(null)
+const editingPlayer = ref(null);
+const playerToDelete = ref(null);
 
-const submitting = ref(false)
-const deleting = ref(false)
+const submitting = ref(false);
+const deleting = ref(false);
 
 const toast = reactive({
   show: false,
-  message: '',
-  type: 'success'
-})
+  message: "",
+  type: "success",
+});
 
 const pageLoading = computed(() => {
-  return playersLoading.value || teamsLoading.value
-})
+  return playersLoading.value || teamsLoading.value;
+});
 
 const pageError = computed(() => {
-  return playersError.value || teamsError.value
-})
+  return playersError.value || teamsError.value;
+});
 
 const teamNames = computed(() => {
   return Object.fromEntries(
-    teams.value.map(team => [
-      team.id,
-      `${team.flag || '🏳️'} ${team.name}`
-    ])
-  )
-})
+    teams.value.map((team) => [team.id, `${team.flag || "🏳️"} ${team.name}`]),
+  );
+});
 
-let toastTimeout = null
+let toastTimeout = null;
 
 function getTeamName(teamId) {
-  return teamNames.value[teamId] || 'Selección no encontrada'
+  return teamNames.value[teamId] || "Selección no encontrada";
 }
 
-function showToast(message, type = 'success') {
+function showToast(message, type = "success") {
   if (toastTimeout) {
-    clearTimeout(toastTimeout)
+    clearTimeout(toastTimeout);
   }
 
-  toast.show = true
-  toast.message = message
-  toast.type = type
+  toast.show = true;
+  toast.message = message;
+  toast.type = type;
 
   toastTimeout = setTimeout(() => {
-    toast.show = false
-  }, 3500)
+    toast.show = false;
+  }, 3500);
 }
 
 function resetForm() {
-  Object.assign(form, { ...defaultForm })
-  editingPlayer.value = null
+  Object.assign(form, { ...defaultForm });
+  editingPlayer.value = null;
 }
 
 function startEdit(player) {
-  editingPlayer.value = player
+  editingPlayer.value = player;
 
   Object.assign(form, {
-    teamId: player.teamId || '',
-    name: player.name || '',
+    teamId: player.teamId || "",
+    name: player.name || "",
     number: player.number || null,
-    position: player.position || '',
-    club: player.club || ''
-  })
+    position: player.position || "",
+    club: player.club || "",
+  });
 
   window.scrollTo({
     top: 0,
-    behavior: 'smooth'
-  })
+    behavior: "smooth",
+  });
 }
 
 function cancelEdit() {
-  resetForm()
+  resetForm();
 }
 
 async function handleSubmit() {
-  const number = Number(form.number)
+  const number = Number(form.number);
 
   if (!Number.isInteger(number) || number < 1 || number > 99) {
-    showToast(
-      'El número de camiseta debe estar entre 1 y 99.',
-      'error'
-    )
+    showToast("El número de camiseta debe estar entre 1 y 99.", "error");
 
-    return
+    return;
   }
 
-  submitting.value = true
+  submitting.value = true;
 
   try {
     const data = {
@@ -439,73 +407,67 @@ async function handleSubmit() {
       name: form.name.trim(),
       number,
       position: form.position,
-      club: form.club.trim()
-    }
+      club: form.club.trim(),
+    };
 
     if (editingPlayer.value) {
-      await updatePlayer(editingPlayer.value.id, data)
-      showToast(`${data.name} actualizado correctamente`)
+      await updatePlayer(editingPlayer.value.id, data);
+      showToast(`${data.name} actualizado correctamente`);
     } else {
-      await createPlayer(data)
-      showToast(`${data.name} creado correctamente`)
+      await createPlayer(data);
+      showToast(`${data.name} creado correctamente`);
     }
 
-    resetForm()
+    resetForm();
   } catch (e) {
     showToast(
-      playersError.value || 'Ocurrió un error con el jugador.',
-      'error'
-    )
+      playersError.value || "Ocurrió un error con el jugador.",
+      "error",
+    );
   } finally {
-    submitting.value = false
+    submitting.value = false;
   }
 }
 
 function confirmDelete(player) {
-  playerToDelete.value = player
+  playerToDelete.value = player;
 }
 
 async function executeDelete() {
   if (!playerToDelete.value?.id) {
-    return
+    return;
   }
 
-  deleting.value = true
+  deleting.value = true;
 
-  const playerId = playerToDelete.value.id
-  const playerName = playerToDelete.value.name
-  const wasEditing = editingPlayer.value?.id === playerId
+  const playerId = playerToDelete.value.id;
+  const playerName = playerToDelete.value.name;
+  const wasEditing = editingPlayer.value?.id === playerId;
 
   try {
-    await deletePlayer(playerId)
+    await deletePlayer(playerId);
 
-    playerToDelete.value = null
+    playerToDelete.value = null;
 
     if (wasEditing) {
-      resetForm()
+      resetForm();
     }
 
-    showToast(`${playerName} eliminado correctamente`)
+    showToast(`${playerName} eliminado correctamente`);
   } catch (e) {
-    showToast(
-      playersError.value || 'No se pudo eliminar el jugador.',
-      'error'
-    )
+    showToast(playersError.value || "No se pudo eliminar el jugador.", "error");
   } finally {
-    deleting.value = false
+    deleting.value = false;
   }
 }
 
 onMounted(async () => {
-  await Promise.all([
-    fetchPlayers(),
-    fetchTeams()
-  ])
-})
+  await Promise.all([fetchPlayers(), fetchTeams()]);
+});
 </script>
 
 <style scoped>
-.manage-page {
+.page-layout {
   --black: #0b0d0c;
   --lime: #9dca53;
   --lime-dark: #729c34;
@@ -517,8 +479,9 @@ onMounted(async () => {
   --text: #171a17;
   --danger: #b93838;
 
-  min-height: 100vh;
-  padding: 64px max(24px, calc((100% - 1100px) / 2));
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
   font-family: Inter, Arial, Helvetica, sans-serif;
   color: var(--text);
   background:
@@ -530,9 +493,24 @@ onMounted(async () => {
     var(--background);
 }
 
+.manage-page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 28px 24px;
+  flex: 1;
+}
+
+.manage-page *,
+.manage-page *::before,
+.manage-page *::after {
+  box-sizing: border-box;
+}
+
 .header-section {
   max-width: 730px;
-  margin: 0 auto 40px;
+  margin: 0 auto 28px;
   text-align: center;
 }
 
@@ -609,12 +587,12 @@ onMounted(async () => {
 
 .form-section {
   padding: 30px;
-  margin-bottom: 48px;
+  margin-bottom: 32px;
 }
 
 .form-title {
   display: flex;
-  margin: 0 0 28px;
+  margin: 0 0 22px;
   align-items: center;
   gap: 11px;
   font-size: 23px;
@@ -624,7 +602,7 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
-  margin-bottom: 30px;
+  margin-bottom: 24px;
 }
 
 .form-group {
@@ -644,6 +622,7 @@ onMounted(async () => {
 
 .form-input {
   width: 100%;
+  min-width: 0;
   min-height: 48px;
   padding: 12px 14px;
   font-size: 14px;
@@ -667,7 +646,7 @@ onMounted(async () => {
 
 .form-actions {
   display: flex;
-  padding-top: 22px;
+  padding-top: 16px;
   justify-content: flex-end;
   gap: 12px;
   border-top: 1px solid var(--border);
@@ -675,7 +654,7 @@ onMounted(async () => {
 
 .section-title {
   display: flex;
-  margin: 0 0 22px;
+  margin: 0 0 16px;
   align-items: center;
   gap: 12px;
   font-size: 27px;
@@ -794,6 +773,10 @@ onMounted(async () => {
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--white);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
 }
 
 .action-btn--edit:hover {
@@ -944,14 +927,20 @@ onMounted(async () => {
     transform: rotate(360deg);
   }
 }
+.page-layout :deep(footer) {
+  width: 100%;
+  margin-top: 0;
+  flex-shrink: 0;
+}
 
 @media (max-width: 650px) {
   .manage-page {
-    padding: 40px 14px;
+    padding: 26px 14px;
   }
 
   .title {
     font-size: 35px;
+    letter-spacing: -1px;
   }
 
   .form-section {

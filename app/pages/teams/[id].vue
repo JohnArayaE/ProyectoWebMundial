@@ -1,6 +1,9 @@
 <template>
-  <div class="team-detail-page">
-    <main class="page-container">
+  <div class="page-layout">
+    <AppHeader />
+
+    <main class="team-detail-page">
+      <div class="page-container">
       <NuxtLink to="/teams" class="back-link">
         ← Volver a selecciones
       </NuxtLink>
@@ -225,7 +228,10 @@
           </NuxtLink>
         </footer>
       </article>
+      </div>
     </main>
+
+    <AppFooter />
   </div>
 </template>
 
@@ -341,6 +347,12 @@ watch(teamId, (newId, previousId) => {
 </script>
 
 <style scoped>
+.page-layout {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+}
+
 .team-detail-page {
   --black: #0b0d0c;
   --lime: #9dca53;
@@ -353,8 +365,9 @@ watch(teamId, (newId, previousId) => {
   --text: #171a17;
   --danger: #b93838;
 
-  min-height: 100vh;
-  padding: 64px 24px;
+  width: 100%;
+  flex: 0 0 auto;
+  padding: 28px 24px 16px;
   font-family: Inter, Arial, Helvetica, sans-serif;
   color: var(--text);
   background:
@@ -373,7 +386,7 @@ watch(teamId, (newId, previousId) => {
 
 .back-link {
   display: inline-flex;
-  margin-bottom: 25px;
+  margin-bottom: 16px;
   align-items: center;
   gap: 8px;
   font-size: 13px;
@@ -397,8 +410,8 @@ watch(teamId, (newId, previousId) => {
 
 .team-hero {
   display: flex;
-  min-height: 330px;
-  padding: 55px;
+  min-height: 260px;
+  padding: 40px 45px;
   align-items: center;
   gap: 44px;
   color: var(--white);
@@ -465,7 +478,7 @@ watch(teamId, (newId, previousId) => {
 
 .information-section,
 .players-section {
-  padding: 42px;
+  padding: 30px 42px;
 }
 
 .players-section {
@@ -654,7 +667,7 @@ watch(teamId, (newId, previousId) => {
 
 .page-actions {
   display: flex;
-  padding: 26px 42px;
+  padding: 18px 42px;
   justify-content: flex-end;
   gap: 12px;
   border-top: 1px solid var(--border);

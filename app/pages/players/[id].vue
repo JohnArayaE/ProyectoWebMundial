@@ -1,201 +1,205 @@
 <template>
-  <div class="player-detail-page">
-    <div class="page-container">
-      <NuxtLink to="/players" class="back-link">
-        <span>←</span>
-        Volver a jugadores
-      </NuxtLink>
+  <div class="page-layout">
+    <AppHeader />
 
-      <!-- Cargando -->
-      <div v-if="pageLoading" class="loader-container">
-        <div class="spinner"></div>
-        <p>Cargando información del jugador...</p>
-      </div>
-
-      <!-- Error -->
-      <div v-else-if="pageError" class="error-state glass">
-        <div class="state-icon">⚠️</div>
-
-        <h1>No se pudo cargar el jugador</h1>
-
-        <p>{{ pageError }}</p>
-
-        <button
-          type="button"
-          class="btn btn-primary"
-          @click="loadPlayer"
-        >
-          Intentar nuevamente
-        </button>
-      </div>
-
-      <!-- Jugador no encontrado -->
-      <div v-else-if="!player" class="empty-state glass">
-        <div class="state-icon">🔍</div>
-
-        <h1>Jugador no encontrado</h1>
-
-        <p>
-          El jugador solicitado no existe o fue eliminado.
-        </p>
-
-        <NuxtLink to="/players" class="btn btn-primary">
-          Ver todos los jugadores
+    <main class="player-detail-page">
+      <div class="page-container">
+        <NuxtLink to="/players" class="back-link">
+          <span>←</span>
+          Volver a jugadores
         </NuxtLink>
-      </div>
 
-      <!-- Detalles -->
-      <div v-else class="player-detail glass">
-        <section class="player-hero">
-          <div class="shirt-container">
-            <div class="shirt-number">
-              {{ player.number || '-' }}
+        <!-- Cargando -->
+        <div v-if="pageLoading" class="loader-container">
+          <div class="spinner"></div>
+          <p>Cargando información del jugador...</p>
+        </div>
+
+        <!-- Error -->
+        <div v-else-if="pageError" class="error-state glass">
+          <div class="state-icon">⚠️</div>
+
+          <h1>No se pudo cargar el jugador</h1>
+
+          <p>{{ pageError }}</p>
+
+          <button
+            type="button"
+            class="btn btn-primary"
+            @click="loadPlayer"
+          >
+            Intentar nuevamente
+          </button>
+        </div>
+
+        <!-- Jugador no encontrado -->
+        <div v-else-if="!player" class="empty-state glass">
+          <div class="state-icon">🔍</div>
+
+          <h1>Jugador no encontrado</h1>
+
+          <p>
+            El jugador solicitado no existe o fue eliminado.
+          </p>
+
+          <NuxtLink to="/players" class="btn btn-primary">
+            Ver todos los jugadores
+          </NuxtLink>
+        </div>
+
+        <!-- Detalles -->
+        <div v-else class="player-detail glass">
+          <section class="player-hero">
+            <div class="shirt-container">
+              <div class="shirt-number">
+                {{ player.number || '-' }}
+              </div>
+
+              <span class="shirt-label">
+                Número
+              </span>
             </div>
 
-            <span class="shirt-label">
-              Número
-            </span>
-          </div>
-
-          <div class="player-main-information">
-            <span class="position-badge">
-              {{ player.position || 'Sin posición' }}
-            </span>
-
-            <h1 class="player-name">
-              {{ player.name }}
-            </h1>
-
-            <div class="team-information">
-              <span class="team-flag">
-                {{ selectedTeam?.flag || '🏳️' }}
+            <div class="player-main-information">
+              <span class="position-badge">
+                {{ player.position || 'Sin posición' }}
               </span>
 
-              <span>
-                {{
-                  selectedTeam?.name ||
-                  'Selección no encontrada'
-                }}
-              </span>
-            </div>
-          </div>
-        </section>
+              <h1 class="player-name">
+                {{ player.name }}
+              </h1>
 
-        <section class="information-section">
-          <h2 class="section-title">
-            Información del jugador
-          </h2>
-
-          <div class="information-grid">
-            <div class="information-card">
-              <span class="information-icon">👕</span>
-
-              <div>
-                <span class="information-label">
-                  Número de camiseta
+              <div class="team-information">
+                <span class="team-flag">
+                  {{ selectedTeam?.flag || '🏳️' }}
                 </span>
 
-                <strong class="information-value">
-                  {{ player.number || 'No registrado' }}
-                </strong>
-              </div>
-            </div>
-
-            <div class="information-card">
-              <span class="information-icon">⚽</span>
-
-              <div>
-                <span class="information-label">
-                  Posición
-                </span>
-
-                <strong class="information-value">
-                  {{ player.position || 'No registrada' }}
-                </strong>
-              </div>
-            </div>
-
-            <div class="information-card">
-              <span class="information-icon">🏟️</span>
-
-              <div>
-                <span class="information-label">
-                  Club actual
-                </span>
-
-                <strong class="information-value">
-                  {{ player.club || 'No registrado' }}
-                </strong>
-              </div>
-            </div>
-
-            <div class="information-card">
-              <span class="information-icon">
-                {{ selectedTeam?.flag || '🏳️' }}
-              </span>
-
-              <div>
-                <span class="information-label">
-                  Selección
-                </span>
-
-                <strong class="information-value">
+                <span>
                   {{
                     selectedTeam?.name ||
                     'Selección no encontrada'
                   }}
-                </strong>
+                </span>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section
-          v-if="selectedTeam"
-          class="team-section"
-        >
-          <div class="team-section-content">
-            <div>
-              <span class="team-section-label">
-                REPRESENTA A
-              </span>
+          <section class="information-section">
+            <h2 class="section-title">
+              Información del jugador
+            </h2>
 
-              <h2>
-                {{ selectedTeam.flag || '🏳️' }}
-                {{ selectedTeam.name }}
-              </h2>
+            <div class="information-grid">
+              <div class="information-card">
+                <span class="information-icon">👕</span>
 
-              <p>
-                Grupo {{ selectedTeam.group || 'sin asignar' }}
-                ·
-                {{ selectedTeam.confederation || 'Sin confederación' }}
-              </p>
+                <div>
+                  <span class="information-label">
+                    Número de camiseta
+                  </span>
+
+                  <strong class="information-value">
+                    {{ player.number || 'No registrado' }}
+                  </strong>
+                </div>
+              </div>
+
+              <div class="information-card">
+                <span class="information-icon">⚽</span>
+
+                <div>
+                  <span class="information-label">
+                    Posición
+                  </span>
+
+                  <strong class="information-value">
+                    {{ player.position || 'No registrada' }}
+                  </strong>
+                </div>
+              </div>
+
+              <div class="information-card">
+                <span class="information-icon">🏟️</span>
+
+                <div>
+                  <span class="information-label">
+                    Club actual
+                  </span>
+
+                  <strong class="information-value">
+                    {{ player.club || 'No registrado' }}
+                  </strong>
+                </div>
+              </div>
+
+              <div class="information-card">
+                <span class="information-icon">
+                  {{ selectedTeam?.flag || '🏳️' }}
+                </span>
+
+                <div>
+                  <span class="information-label">
+                    Selección
+                  </span>
+
+                  <strong class="information-value">
+                    {{
+                      selectedTeam?.name ||
+                      'Selección no encontrada'
+                    }}
+                  </strong>
+                </div>
+              </div>
             </div>
+          </section>
+
+          <section
+            v-if="selectedTeam"
+            class="team-section"
+          >
+            <div class="team-section-content">
+              <div>
+                <span class="team-section-label">
+                  REPRESENTA A
+                </span>
+
+                <h2>
+                  {{ selectedTeam.flag || '🏳️' }}
+                  {{ selectedTeam.name }}
+                </h2>
+
+                <p>
+                  Grupo {{ selectedTeam.group || 'sin asignar' }}
+                  ·
+                  {{ selectedTeam.confederation || 'Sin confederación' }}
+                </p>
+              </div>
+
+              <NuxtLink
+                v-if="selectedTeam.id"
+                :to="`/teams/${selectedTeam.id}`"
+                class="btn btn-secondary"
+              >
+                Ver selección
+              </NuxtLink>
+            </div>
+          </section>
+
+          <div class="page-actions">
+            <NuxtLink to="/players" class="btn btn-secondary">
+              Ver todos los jugadores
+            </NuxtLink>
 
             <NuxtLink
-              v-if="selectedTeam.id"
-              :to="`/teams/${selectedTeam.id}`"
-              class="btn btn-secondary"
+              to="/players/manage"
+              class="btn btn-primary"
             >
-              Ver selección
+              Gestionar jugadores
             </NuxtLink>
           </div>
-        </section>
-
-        <div class="page-actions">
-          <NuxtLink to="/players" class="btn btn-secondary">
-            Ver todos los jugadores
-          </NuxtLink>
-
-          <NuxtLink
-            to="/players/manage"
-            class="btn btn-primary"
-          >
-            Gestionar jugadores
-          </NuxtLink>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
@@ -216,14 +220,14 @@ const {
 } = usePlayers()
 
 const {
-  teams,
-  loading: teamsLoading,
-  error: teamsError,
-  fetchTeams
+  loading: teamLoading,
+  fetchTeamById
 } = useTeams()
 
 const player = ref(null)
+const selectedTeam = ref(null)
 const localError = ref(null)
+const initialLoading = ref(true)
 
 const playerId = computed(() => {
   const id = route.params.id
@@ -231,49 +235,54 @@ const playerId = computed(() => {
   return Array.isArray(id) ? id[0] : id
 })
 
-const selectedTeam = computed(() => {
-  if (!player.value) {
-    return null
-  }
-
-  return teams.value.find(
-    team => team.id === player.value.teamId
-  ) || null
-})
-
 const pageLoading = computed(() => {
-  return playerLoading.value || teamsLoading.value
-})
-
-const pageError = computed(() => {
   return (
-    localError.value ||
-    playerError.value ||
-    teamsError.value
+    initialLoading.value ||
+    playerLoading.value ||
+    teamLoading.value
   )
 })
 
+const pageError = computed(() => {
+  return localError.value || playerError.value
+})
+
 async function loadPlayer() {
+  initialLoading.value = true
   localError.value = null
   player.value = null
+  selectedTeam.value = null
 
   if (!playerId.value) {
-    localError.value = 'El identificador del jugador no es válido.'
+    localError.value =
+      'El identificador del jugador no es válido.'
+
+    initialLoading.value = false
     return
   }
 
   try {
-    const [playerResult] = await Promise.all([
-      fetchPlayerById(playerId.value),
-      fetchTeams()
-    ])
+    const playerResult = await fetchPlayerById(
+      playerId.value
+    )
 
     player.value = playerResult
+
+    if (playerResult?.teamId) {
+      selectedTeam.value = await fetchTeamById(
+        playerResult.teamId
+      )
+    }
   } catch (error) {
-    console.error('[players/id] loadPlayer:', error)
+    console.error(
+      '[players/id] Error cargando jugador:',
+      error
+    )
 
     localError.value =
-      'Ocurrió un error al consultar la información del jugador.'
+      'Ocurrió un error al consultar el jugador.'
+  } finally {
+    initialLoading.value = false
   }
 }
 

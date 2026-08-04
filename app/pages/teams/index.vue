@@ -1,77 +1,156 @@
 <template>
-  <div class="teams-page">
-    <div class="header-section">
-      <h1 class="title text-gradient">Selecciones Participantes</h1>
-      <p class="subtitle">Descubre los 48 equipos que buscarán la gloria en el Mundial 2026</p>
-      <NuxtLink to="/teams/manage" class="btn btn-primary manage-link">
-        ➕ Gestionar Equipos
-      </NuxtLink>
-    </div>
+  <div class="page-layout">
+    <AppHeader />
 
-    <!-- Filtros -->
-    <div class="filters glass">
-      <input 
-        v-model="searchQuery" 
-        type="text" 
-        placeholder="Buscar selección..." 
-        class="search-input"
-      />
-      <div class="group-filter">
-        <select v-model="selectedGroup" class="select-input">
-          <option value="">Todos los Grupos</option>
-          <option v-for="group in groups" :key="group" :value="group">
-            Grupo {{ group }}
-          </option>
-        </select>
-      </div>
-    </div>
+    <main class="teams-page">
+      <!-- Encabezado de la página -->
+      <section class="header-section">
+        <h1 class="title text-gradient">
+          Selecciones Participantes
+        </h1>
 
-    <!-- Loader -->
-    <div v-if="loading" class="loader-container">
-      <div class="spinner"></div>
-      <p>Cargando equipos...</p>
-    </div>
+        <p class="subtitle">
+          Descubre los 48 equipos que buscarán la gloria en el Mundial 2026
+        </p>
 
-    <!-- Error -->
-    <div v-else-if="error" class="error-container glass">
-      <p>⚠️ Ocurrió un error al cargar: {{ error }}</p>
-    </div>
+        <NuxtLink
+          to="/teams/manage"
+          class="btn btn-primary manage-link"
+        >
+          ➕ Gestionar Equipos
+        </NuxtLink>
+      </section>
 
-    <!-- Grid de Equipos -->
-    <div v-else class="teams-grid">
-      <NuxtLink 
-        v-for="team in filteredTeams" 
-        :key="team.id" 
-        :to="`/teams/${team.id}`"
-        class="team-card glass glass-card"
+      <!-- Filtros -->
+      <section class="filters glass">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Buscar selección..."
+          class="search-input"
+        />
+
+        <div class="group-filter">
+          <select
+            v-model="selectedGroup"
+            class="select-input"
+          >
+            <option value="">
+              Todos los Grupos
+            </option>
+
+            <option
+              v-for="group in groups"
+              :key="group"
+              :value="group"
+            >
+              Grupo {{ group }}
+            </option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Cargando -->
+      <div
+        v-if="loading"
+        class="loader-container"
       >
-        <div class="team-header">
-          <div class="flag-container">
-            <span v-if="team.flag && team.flag.trim() !== ''" class="flag">{{ team.flag }}</span>
-            <span v-else class="flag-placeholder">🏳️</span>
-          </div>
-          <div class="team-group">Grupo {{ team.group }}</div>
-        </div>
-        <div class="team-info">
-          <h2 class="team-name">{{ team.name }}</h2>
-          <div class="team-badges">
-            <span class="badge">{{ team.confederation }}</span>
-            <span v-if="team.fifaRanking" class="badge rank">FIFA #{{ team.fifaRanking }}</span>
-          </div>
-        </div>
-      </NuxtLink>
-    </div>
+        <div class="spinner"></div>
+        <p>Cargando equipos...</p>
+      </div>
 
-    <div v-if="!loading && filteredTeams.length === 0" class="empty-state glass">
-      <p>No se encontraron selecciones con esos filtros.</p>
-    </div>
+      <!-- Error -->
+      <div
+        v-else-if="error"
+        class="error-container glass"
+      >
+        <p>
+          ⚠️ Ocurrió un error al cargar: {{ error }}
+        </p>
+      </div>
+
+      <!-- Equipos -->
+      <div
+        v-else-if="filteredTeams.length > 0"
+        class="teams-grid"
+      >
+        <NuxtLink
+          v-for="team in filteredTeams"
+          :key="team.id"
+          :to="`/teams/${team.id}`"
+          class="team-card glass glass-card"
+        >
+          <div class="team-header">
+            <div class="flag-container">
+              <span
+                v-if="team.flag && team.flag.trim() !== ''"
+                class="flag"
+              >
+                {{ team.flag }}
+              </span>
+
+              <span
+                v-else
+                class="flag-placeholder"
+              >
+                🏳️
+              </span>
+            </div>
+
+            <div class="team-group">
+              Grupo {{ team.group }}
+            </div>
+          </div>
+
+          <div class="team-info">
+            <h2 class="team-name">
+              {{ team.name }}
+            </h2>
+
+            <div class="team-badges">
+              <span class="badge">
+                {{ team.confederation }}
+              </span>
+
+              <span
+                v-if="team.fifaRanking"
+                class="badge rank"
+              >
+                FIFA #{{ team.fifaRanking }}
+              </span>
+            </div>
+          </div>
+        </NuxtLink>
+      </div>
+
+      <!-- Sin resultados -->
+      <div
+        v-else
+        class="empty-state glass"
+      >
+        <p>
+          No se encontraron selecciones con esos filtros.
+        </p>
+      </div>
+    </main>
+
+    <AppFooter />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import {
+  computed,
+  onMounted,
+  ref
+} from 'vue'
 
-const { teams, loading, error, fetchTeams } = useTeams()
+const {
+  teams,
+  loading,
+  error,
+  fetchTeams
+} = useTeams()
 
 const searchQuery = ref('')
 const selectedGroup = ref('')
@@ -81,21 +160,36 @@ onMounted(() => {
 })
 
 const groups = computed(() => {
-  const uniqueGroups = new Set(teams.value.map(t => t.group).filter(Boolean))
+  const uniqueGroups = new Set(
+    teams.value
+      .map(team => team.group)
+      .filter(Boolean)
+  )
+
   return Array.from(uniqueGroups).sort()
 })
 
 const filteredTeams = computed(() => {
+  const normalizedSearch = searchQuery.value
+    .trim()
+    .toLowerCase()
+
   return teams.value.filter(team => {
-    const matchesSearch = team.name?.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchesGroup = selectedGroup.value === '' || team.group === selectedGroup.value
+    const matchesSearch = team.name
+      ?.toLowerCase()
+      .includes(normalizedSearch)
+
+    const matchesGroup =
+      selectedGroup.value === '' ||
+      team.group === selectedGroup.value
+
     return matchesSearch && matchesGroup
   })
 })
 </script>
 
 <style scoped>
-.teams-page {
+.page-layout {
   --black: #0b0d0c;
   --lime: #9dca53;
   --lime-dark: #729c34;
@@ -107,8 +201,9 @@ const filteredTeams = computed(() => {
   --text: #171a17;
   --danger: #b93838;
 
+  display: flex;
   min-height: 100vh;
-  padding: 64px max(24px, calc((100% - 1180px) / 2));
+  flex-direction: column;
   font-family: Inter, Arial, Helvetica, sans-serif;
   color: var(--text);
   background:
@@ -118,6 +213,13 @@ const filteredTeams = computed(() => {
       transparent 27%
     ),
     var(--background);
+}
+
+.teams-page {
+  box-sizing: border-box;
+  width: 100%;
+  flex: 1;
+  padding: 64px max(24px, calc((100% - 1180px) / 2));
 }
 
 .header-section {
@@ -153,10 +255,14 @@ const filteredTeams = computed(() => {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  box-sizing: border-box;
   font-size: 13px;
   font-weight: 800;
+  color: inherit;
+  text-decoration: none;
   border: 0;
   border-radius: 12px;
+  cursor: pointer;
   transition:
     transform 180ms ease,
     background 180ms ease,
@@ -173,10 +279,6 @@ const filteredTeams = computed(() => {
   background: #8fbd49;
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(114, 156, 52, 0.27);
-}
-
-.manage-link {
-  gap: 8px;
 }
 
 .glass {
@@ -203,6 +305,7 @@ const filteredTeams = computed(() => {
 .select-input {
   min-height: 48px;
   padding: 12px 15px;
+  box-sizing: border-box;
   font-size: 14px;
   color: var(--text);
   border: 1px solid var(--border);
@@ -236,7 +339,10 @@ const filteredTeams = computed(() => {
 
 .teams-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(270px, 1fr)
+  );
   gap: 22px;
 }
 
@@ -244,12 +350,11 @@ const filteredTeams = computed(() => {
   display: flex;
   min-height: 230px;
   padding: 24px;
+  box-sizing: border-box;
   flex-direction: column;
   overflow: hidden;
-
   color: var(--text);
   text-decoration: none;
-
   transition:
     transform 180ms ease,
     border-color 180ms ease,
@@ -345,7 +450,6 @@ const filteredTeams = computed(() => {
 .empty-state,
 .error-container {
   padding: 48px 24px;
-  margin-top: 24px;
   text-align: center;
   color: var(--gray);
 }

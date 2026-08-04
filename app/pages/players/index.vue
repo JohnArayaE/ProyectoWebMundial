@@ -1,185 +1,214 @@
 <template>
-  <div class="players-page">
-    <!-- Encabezado -->
-    <div class="header-section">
-      <h1 class="title">
-        Jugadores del Mundial 2026
-      </h1>
+  <div class="page-layout">
+    <AppHeader />
 
-      <p class="subtitle">
-        Conoce a los futbolistas que representarán a sus selecciones
-        en la Copa Mundial 2026.
-      </p>
+    <main class="players-page">
+      <!-- Encabezado -->
+      <section class="header-section">
+        <h1 class="title">
+          Jugadores del Mundial 2026
+        </h1>
 
-      <NuxtLink
-        to="/players/manage"
-        class="btn btn-primary manage-link"
-      >
-        ➕ Gestionar Jugadores
-      </NuxtLink>
-    </div>
+        <p class="subtitle">
+          Conoce a los futbolistas que representarán a sus selecciones
+          en la Copa Mundial 2026.
+        </p>
 
-    <!-- Filtros -->
-    <div class="filters glass">
-      <input
-        v-model="searchQuery"
-        type="text"
-        class="filter-input search-input"
-        placeholder="Buscar jugador o club..."
-      />
-
-      <select
-        v-model="selectedTeam"
-        class="filter-input select-input"
-      >
-        <option value="">
-          Todas las selecciones
-        </option>
-
-        <option
-          v-for="team in teams"
-          :key="team.id"
-          :value="team.id"
+        <NuxtLink
+          to="/players/manage"
+          class="btn btn-primary manage-link"
         >
-          {{ team.flag || '🏳️' }} {{ team.name }}
-        </option>
-      </select>
+          ➕ Gestionar Jugadores
+        </NuxtLink>
+      </section>
 
-      <select
-        v-model="selectedPosition"
-        class="filter-input select-input"
-      >
-        <option value="">
-          Todas las posiciones
-        </option>
+      <!-- Filtros -->
+      <section class="filters glass">
+        <input
+          v-model="searchQuery"
+          type="text"
+          class="filter-input search-input"
+          placeholder="Buscar jugador o club..."
+        />
 
-        <option
-          v-for="position in positions"
-          :key="position"
-          :value="position"
+        <select
+          v-model="selectedTeam"
+          class="filter-input select-input"
         >
-          {{ position }}
-        </option>
-      </select>
-    </div>
+          <option value="">
+            Todas las selecciones
+          </option>
 
-    <!-- Cargando -->
-    <div v-if="pageLoading" class="loader-container">
-      <div class="spinner"></div>
-      <p>Cargando jugadores...</p>
-    </div>
+          <option
+            v-for="team in teams"
+            :key="team.id"
+            :value="team.id"
+          >
+            {{ team.flag || '🏳️' }} {{ team.name }}
+          </option>
+        </select>
 
-    <!-- Error -->
-    <div v-else-if="pageError" class="error-container glass">
-      <p>⚠️ {{ pageError }}</p>
-
-      <button
-        type="button"
-        class="btn btn-secondary"
-        @click="loadData"
-      >
-        Intentar nuevamente
-      </button>
-    </div>
-
-    <!-- Lista de jugadores -->
-    <div v-else-if="filteredPlayers.length > 0" class="players-grid">
-      <NuxtLink
-        v-for="player in filteredPlayers"
-        :key="player.id"
-        :to="`/players/${player.id}`"
-        class="player-card glass"
+        <select
+          v-model="selectedPosition"
+          class="filter-input select-input"
         >
-        <div class="player-card-header">
-          <div class="shirt-number">
-            {{ player.number || '-' }}
-          </div>
+          <option value="">
+            Todas las posiciones
+          </option>
 
-          <span class="position-badge">
-            {{ player.position || 'Sin posición' }}
-          </span>
-        </div>
+          <option
+            v-for="position in positions"
+            :key="position"
+            :value="position"
+          >
+            {{ position }}
+          </option>
+        </select>
+      </section>
 
-        <div class="player-card-body">
-          <div class="team-flag">
-            {{ getTeam(player.teamId)?.flag || '🏳️' }}
-          </div>
+      <!-- Cargando -->
+      <div
+        v-if="pageLoading"
+        class="loader-container"
+      >
+        <div class="spinner"></div>
+        <p>Cargando jugadores...</p>
+      </div>
 
-          <h2 class="player-name">
-            {{ player.name }}
-          </h2>
+      <!-- Error -->
+      <div
+        v-else-if="pageError"
+        class="error-container glass"
+      >
+        <p>⚠️ {{ pageError }}</p>
 
-          <p class="team-name">
-            {{ getTeam(player.teamId)?.name || 'Selección no encontrada' }}
-          </p>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          @click="loadData"
+        >
+          Intentar nuevamente
+        </button>
+      </div>
 
-          <div class="player-information">
-            <div class="information-item">
-              <span class="information-label">Club</span>
-
-              <span class="information-value">
-                {{ player.club || 'No registrado' }}
-              </span>
+      <!-- Lista de jugadores -->
+      <div
+        v-else-if="filteredPlayers.length > 0"
+        class="players-grid"
+      >
+        <NuxtLink
+          v-for="player in filteredPlayers"
+          :key="player.id"
+          :to="`/players/${player.id}`"
+          class="player-card glass"
+        >
+          <div class="player-card-header">
+            <div class="shirt-number">
+              {{ player.number || '-' }}
             </div>
 
-            <div class="information-item">
-              <span class="information-label">Posición</span>
+            <span class="position-badge">
+              {{ player.position || 'Sin posición' }}
+            </span>
+          </div>
 
-              <span class="information-value">
-                {{ player.position || 'No registrada' }}
-              </span>
+          <div class="player-card-body">
+            <div class="team-flag">
+              {{ getTeam(player.teamId)?.flag || '🏳️' }}
+            </div>
+
+            <h2 class="player-name">
+              {{ player.name }}
+            </h2>
+
+            <p class="team-name">
+              {{
+                getTeam(player.teamId)?.name ||
+                'Selección no encontrada'
+              }}
+            </p>
+
+            <div class="player-information">
+              <div class="information-item">
+                <span class="information-label">
+                  Club
+                </span>
+
+                <span class="information-value">
+                  {{ player.club || 'No registrado' }}
+                </span>
+              </div>
+
+              <div class="information-item">
+                <span class="information-label">
+                  Posición
+                </span>
+
+                <span class="information-value">
+                  {{ player.position || 'No registrada' }}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      </NuxtLink>
-    </div>
+        </NuxtLink>
+      </div>
 
-    <!-- Sin resultados -->
-    <div v-else class="empty-state glass">
-      <div class="empty-icon">⚽</div>
-
-      <h2>
-        {{
-          players.length === 0
-            ? 'No hay jugadores registrados'
-            : 'No se encontraron jugadores'
-        }}
-      </h2>
-
-      <p>
-        {{
-          players.length === 0
-            ? 'Registra el primer jugador para comenzar.'
-            : 'Prueba cambiando los filtros de búsqueda.'
-        }}
-      </p>
-
-      <NuxtLink
-        v-if="players.length === 0"
-        to="/players/manage"
-        class="btn btn-primary"
-      >
-        ➕ Registrar jugador
-      </NuxtLink>
-
-      <button
+      <!-- Sin resultados -->
+      <div
         v-else
-        type="button"
-        class="btn btn-secondary"
-        @click="clearFilters"
+        class="empty-state glass"
       >
-        Limpiar filtros
-      </button>
-    </div>
+        <div class="empty-icon">⚽</div>
 
-    <!-- Cantidad mostrada -->
-    <div
-      v-if="!pageLoading && !pageError && players.length > 0"
-      class="results-count"
-    >
-      Mostrando {{ filteredPlayers.length }}
-      de {{ players.length }} jugadores
-    </div>
+        <h2>
+          {{
+            players.length === 0
+              ? 'No hay jugadores registrados'
+              : 'No se encontraron jugadores'
+          }}
+        </h2>
+
+        <p>
+          {{
+            players.length === 0
+              ? 'Registra el primer jugador para comenzar.'
+              : 'Prueba cambiando los filtros de búsqueda.'
+          }}
+        </p>
+
+        <NuxtLink
+          v-if="players.length === 0"
+          to="/players/manage"
+          class="btn btn-primary"
+        >
+          ➕ Registrar jugador
+        </NuxtLink>
+
+        <button
+          v-else
+          type="button"
+          class="btn btn-secondary"
+          @click="clearFilters"
+        >
+          Limpiar filtros
+        </button>
+      </div>
+
+      <!-- Cantidad mostrada -->
+      <div
+        v-if="
+          !pageLoading &&
+          !pageError &&
+          players.length > 0
+        "
+        class="results-count"
+      >
+        Mostrando {{ filteredPlayers.length }}
+        de {{ players.length }} jugadores
+      </div>
+    </main>
+
+    <AppFooter />
   </div>
 </template>
 
@@ -278,7 +307,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.players-page {
+.page-layout {
   --black: #0b0d0c;
   --lime: #9dca53;
   --lime-dark: #729c34;
@@ -290,8 +319,9 @@ onMounted(() => {
   --text: #171a17;
   --danger: #b93838;
 
-  min-height: 100vh;
-  padding: 64px max(24px, calc((100% - 1180px) / 2));
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
   font-family: Inter, Arial, Helvetica, sans-serif;
   color: var(--text);
   background:
@@ -303,9 +333,22 @@ onMounted(() => {
     var(--background);
 }
 
+.players-page {
+  box-sizing: border-box;
+  width: 100%;
+  flex: 1;
+  padding: 56px max(24px, calc((100% - 1180px) / 2));
+}
+
+.players-page *,
+.players-page *::before,
+.players-page *::after {
+  box-sizing: border-box;
+}
+
 .header-section {
   max-width: 760px;
-  margin: 0 auto 40px;
+  margin: 0 auto 32px;
   text-align: center;
 }
 
@@ -345,7 +388,7 @@ onMounted(() => {
   text-decoration: none;
   transition:
     transform 180ms ease,
-    background 180ms ease,
+    background-color 180ms ease,
     box-shadow 180ms ease;
 }
 
@@ -379,11 +422,12 @@ onMounted(() => {
     minmax(190px, 240px);
   gap: 14px;
   padding: 20px;
-  margin-bottom: 32px;
+  margin-bottom: 26px;
 }
 
 .filter-input {
   width: 100%;
+  min-width: 0;
   min-height: 48px;
   padding: 12px 15px;
   font-size: 14px;
@@ -416,11 +460,11 @@ onMounted(() => {
 }
 
 .player-card {
-  color: var(--text);
-  text-decoration: none;
   min-height: 310px;
   padding: 24px;
   overflow: hidden;
+  color: var(--text);
+  text-decoration: none;
   transition:
     transform 180ms ease,
     border-color 180ms ease,
@@ -445,6 +489,7 @@ onMounted(() => {
   width: 62px;
   height: 62px;
   place-items: center;
+  flex-shrink: 0;
   font-size: 25px;
   font-weight: 900;
   color: var(--black);
@@ -544,6 +589,7 @@ onMounted(() => {
 
 .error-container {
   color: var(--danger);
+  border-color: rgba(185, 56, 56, 0.25);
 }
 
 .error-container .btn {
@@ -593,8 +639,13 @@ onMounted(() => {
     padding: 40px 14px;
   }
 
+  .header-section {
+    margin-bottom: 28px;
+  }
+
   .title {
     font-size: 35px;
+    letter-spacing: -1px;
   }
 
   .manage-link {
