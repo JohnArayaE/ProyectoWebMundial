@@ -216,12 +216,20 @@
 </template>
 
 <script setup>
-const { loadingAuth, logout } = useAuth();
+
 import {
   computed,
   onMounted,
-  ref
+  ref,
+  watch
 } from 'vue'
+
+const {
+  currentUser,
+  loadingAuth,
+  initAuth,
+  logout
+} = useAuth()
 
 const {
   players,
@@ -265,8 +273,11 @@ const filteredPlayers = computed(() => {
     .toLowerCase()
 
   return players.value.filter((player) => {
-    const playerName = player.name?.toLowerCase() || ''
-    const playerClub = player.club?.toLowerCase() || ''
+    const playerName =
+      player.name?.toLowerCase() || ''
+
+    const playerClub =
+      player.club?.toLowerCase() || ''
 
     const matchesSearch =
       playerName.includes(search) ||
@@ -289,7 +300,9 @@ const filteredPlayers = computed(() => {
 })
 
 function getTeam(teamId) {
-  return teams.value.find(team => team.id === teamId)
+  return teams.value.find(
+    team => team.id === teamId
+  )
 }
 
 function clearFilters() {
@@ -305,8 +318,18 @@ async function loadData() {
   ])
 }
 
-onMounted(() => {
-  loadData()
+watch(
+  [loadingAuth, currentUser],
+  async ([authLoading, user]) => {
+    if (!authLoading && !user) {
+      await navigateTo('/login')
+    }
+  }
+)
+
+onMounted(async () => {
+  initAuth()
+  await loadData()
 })
 </script>
 

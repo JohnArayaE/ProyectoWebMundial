@@ -1,6 +1,9 @@
 <template>
   <div class="page-layout">
-    <AppHeader />
+    <AppHeader 
+      :loading="loadingAuth"
+      @logout="logout"
+    />
 
     <main class="team-detail-page">
       <div class="page-container">
@@ -243,6 +246,13 @@ import {
   watch
 } from 'vue'
 
+const {
+  currentUser,
+  loadingAuth,
+  initAuth,
+  logout
+} = useAuth()
+
 const route = useRoute()
 
 const {
@@ -285,8 +295,11 @@ const teamPlayers = computed(() => {
     .filter(player => player.teamId === team.value.id)
     .slice()
     .sort((firstPlayer, secondPlayer) => {
-      const firstNumber = Number(firstPlayer.number) || 999
-      const secondNumber = Number(secondPlayer.number) || 999
+      const firstNumber =
+        Number(firstPlayer.number) || 999
+
+      const secondNumber =
+        Number(secondPlayer.number) || 999
 
       return firstNumber - secondNumber
     })
@@ -335,8 +348,18 @@ async function loadTeam() {
   initialLoading.value = false
 }
 
-onMounted(() => {
-  loadTeam()
+watch(
+  [loadingAuth, currentUser],
+  async ([authLoading, user]) => {
+    if (!authLoading && !user) {
+      await navigateTo('/login')
+    }
+  }
+)
+
+onMounted(async () => {
+  initAuth()
+  await loadTeam()
 })
 
 watch(teamId, (newId, previousId) => {

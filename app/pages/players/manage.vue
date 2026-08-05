@@ -1,6 +1,9 @@
 <template>
   <div class="page-layout">
-    <AppHeader />
+    <AppHeader
+      :loading="loadingAuth"
+      @logout="logout"
+    />
 
     <main class="manage-page">
       <!-- Encabezado -->
@@ -453,8 +456,16 @@ import {
   onBeforeUnmount,
   onMounted,
   reactive,
-  ref
+  ref,
+  watch
 } from "vue"
+
+const {
+  currentUser,
+  loadingAuth,
+  initAuth,
+  logout
+} = useAuth()
 
 const {
   players,
@@ -714,7 +725,17 @@ async function refetchData() {
   ])
 }
 
+watch(
+  [loadingAuth, currentUser],
+  async ([authLoading, user]) => {
+    if (!authLoading && !user) {
+      await navigateTo("/login")
+    }
+  }
+)
+
 onMounted(async () => {
+  initAuth()
   await refetchData()
 })
 

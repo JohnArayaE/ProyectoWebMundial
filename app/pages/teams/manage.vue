@@ -1,6 +1,9 @@
 <template>
   <div class="page-layout">
-    <AppHeader />
+    <AppHeader
+      :loading="loadingAuth"
+      @logout="logout"
+    />
 
     <main class="manage-page">
     <!-- Header -->
@@ -220,11 +223,34 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import {
+  onMounted,
+  reactive,
+  ref,
+  watch
+} from 'vue'
 
-const { teams, loading, error, fetchTeams, createTeam, updateTeam, deleteTeam } = useTeams()
+const {
+  currentUser,
+  loadingAuth,
+  initAuth,
+  logout
+} = useAuth()
 
-const groupOptions = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
+const {
+  teams,
+  loading,
+  error,
+  fetchTeams,
+  createTeam,
+  updateTeam,
+  deleteTeam
+} = useTeams()
+
+const groupOptions = [
+  'A', 'B', 'C', 'D', 'E', 'F',
+  'G', 'H', 'I', 'J', 'K', 'L'
+]
 
 const defaultForm = {
   name: '',
@@ -250,10 +276,14 @@ const toast = reactive({
 let toastTimeout = null
 
 function showToast(message, type = 'success') {
-  if (toastTimeout) clearTimeout(toastTimeout)
+  if (toastTimeout) {
+    clearTimeout(toastTimeout)
+  }
+
   toast.show = true
   toast.message = message
   toast.type = type
+
   toastTimeout = setTimeout(() => {
     toast.show = false
   }, 3500)
@@ -266,6 +296,7 @@ function resetForm() {
 
 function startEdit(team) {
   editingTeam.value = team
+
   Object.assign(form, {
     name: team.name || '',
     group: team.group || '',
@@ -274,8 +305,11 @@ function startEdit(team) {
     confederation: team.confederation || '',
     fifaRanking: team.fifaRanking || null
   })
-  // Scroll al formulario
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  })
 }
 
 function cancelEdit() {
@@ -297,15 +331,24 @@ async function handleSubmit() {
 
     if (editingTeam.value) {
       await updateTeam(editingTeam.value.id, data)
-      showToast(`${data.name} actualizado correctamente`)
+
+      showToast(
+        `${data.name} actualizado correctamente`
+      )
     } else {
       await createTeam(data)
-      showToast(`${data.name} creado correctamente`)
+
+      showToast(
+        `${data.name} creado correctamente`
+      )
     }
 
     resetForm()
   } catch (e) {
-    showToast(error.value || 'Ocurrió un error', 'error')
+    showToast(
+      error.value || 'Ocurrió un error',
+      'error'
+    )
   } finally {
     submitting.value = false
   }
@@ -316,27 +359,51 @@ function confirmDelete(team) {
 }
 
 async function executeDelete() {
-  if (!teamToDelete.value) return
+  if (!teamToDelete.value) {
+    return
+  }
+
   deleting.value = true
 
   try {
     const name = teamToDelete.value.name
+
     await deleteTeam(teamToDelete.value.id)
-    showToast(`${name} eliminado correctamente`)
+
+    showToast(
+      `${name} eliminado correctamente`
+    )
+
     teamToDelete.value = null
-    // Si estábamos editando este equipo, resetear
-    if (editingTeam.value?.id === teamToDelete.value?.id) {
+
+    if (
+      editingTeam.value?.id ===
+      teamToDelete.value?.id
+    ) {
       resetForm()
     }
   } catch (e) {
-    showToast(error.value || 'No se pudo eliminar', 'error')
+    showToast(
+      error.value || 'No se pudo eliminar',
+      'error'
+    )
   } finally {
     deleting.value = false
   }
 }
 
-onMounted(() => {
-  fetchTeams()
+watch(
+  [loadingAuth, currentUser],
+  async ([authLoading, user]) => {
+    if (!authLoading && !user) {
+      await navigateTo('/login')
+    }
+  }
+)
+
+onMounted(async () => {
+  initAuth()
+  await fetchTeams()
 })
 </script>
 

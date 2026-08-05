@@ -142,13 +142,20 @@
 </template>
 
 <script setup>
-const { loadingAuth, logout } = useAuth();
 
 import {
   computed,
   onMounted,
-  ref
+  ref,
+  watch
 } from 'vue'
+
+const {
+  currentUser,
+  loadingAuth,
+  initAuth,
+  logout
+} = useAuth()
 
 const {
   teams,
@@ -159,10 +166,6 @@ const {
 
 const searchQuery = ref('')
 const selectedGroup = ref('')
-
-onMounted(() => {
-  fetchTeams()
-})
 
 const groups = computed(() => {
   const uniqueGroups = new Set(
@@ -190,6 +193,20 @@ const filteredTeams = computed(() => {
 
     return matchesSearch && matchesGroup
   })
+})
+
+watch(
+  [loadingAuth, currentUser],
+  async ([authLoading, user]) => {
+    if (!authLoading && !user) {
+      await navigateTo('/login')
+    }
+  }
+)
+
+onMounted(async () => {
+  initAuth()
+  await fetchTeams()
 })
 </script>
 

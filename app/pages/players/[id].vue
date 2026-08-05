@@ -1,6 +1,10 @@
 <template>
   <div class="page-layout">
-    <AppHeader />
+    <AppHeader 
+      :loading="loadingAuth"
+      @logout="logout"
+    />
+
 
     <main class="player-detail-page">
       <div class="page-container">
@@ -211,6 +215,13 @@ import {
   watch
 } from 'vue'
 
+const {
+  currentUser,
+  loadingAuth,
+  initAuth,
+  logout
+} = useAuth()
+
 const route = useRoute()
 
 const {
@@ -286,8 +297,24 @@ async function loadPlayer() {
   }
 }
 
-onMounted(() => {
-  loadPlayer()
+watch(
+  [loadingAuth, currentUser],
+  async ([authLoading, user]) => {
+    if (!authLoading && !user) {
+      await navigateTo('/login')
+    }
+  }
+)
+
+onMounted(async () => {
+  initAuth()
+  await loadPlayer()
+})
+
+watch(playerId, (newId, previousId) => {
+  if (newId && newId !== previousId) {
+    loadPlayer()
+  }
 })
 
 watch(playerId, (newId, previousId) => {
